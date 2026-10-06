@@ -65,15 +65,15 @@ def dimension_tables(schema: dict, path=None) -> dict:
         conn.close()
 
 
-def table_docs(schema: dict) -> list[tuple[str, str]]:
-    """(table, text) pairs: one doc per table plus one per column, name + sampled values."""
+def table_docs(schema: dict) -> list[tuple[str, str | None, str]]:
+    """(table, column or None, text): one doc per table plus one per column, name + sampled values."""
     docs = []
     for t, cols in schema.items():
         names = ", ".join(c["name"] for c in cols)
-        docs.append((t, f"table {t}: columns {names}"))
+        docs.append((t, None, f"table {t}: columns {names}"))
         for c in cols:
             vals = ", ".join(str(v) for v in c["samples"])
-            docs.append((t, f"{t}.{c['name']} ({c['type']}) e.g. {vals}"))
+            docs.append((t, c["name"], f"{t}.{c['name']} ({c['type']}) e.g. {vals}"))
     return docs
 
 
@@ -85,14 +85,20 @@ class Linker:
         self.dims = dimension_tables(schema, path)
         self.docs = table_docs(schema)
         self.model = SentenceTransformer(EMBED_MODEL)
-        self.doc_vecs = self.model.encode([d for _, d in self.docs], normalize_embeddings=True)
+        self.doc_vecs = self.model.encode([d[2] for d in self.docs], normalize_embeddings=True)
 
-    def retrieve(self, question: str) -> list[str]:
+    def rank(self, question: str) -> list[tuple[str, float, str | None]]:
+        """Top-k (table, score, best-matching column or None for the table description)."""
         q = self.model.encode([question], normalize_embeddings=True)[0]
         best = {}
-        for (table, _), sim in zip(self.docs, self.doc_vecs @ q):
-            best[table] = max(best.get(table, -1.0), float(sim))
-        return sorted(best, key=best.get, reverse=True)[: self.k]
+        for (table, column, _), sim in zip(self.docs, self.doc_vecs @ q):
+            if float(sim) > best.get(table, (-1.0, None))[0]:
+                best[table] = (float(sim), column)
+        ranked = sorted(best.items(), key=lambda kv: kv[1][0], reverse=True)[: self.k]
+        return [(t, score, column) for t, (score, column) in ranked]
+
+    def retrieve(self, question: str) -> list[str]:
+        return [t for t, _, _ in self.rank(question)]
 
     def expand(self, tables: list[str]) -> list[str]:
         """Add the dimension table for each strong key present in the retrieved tables."""
@@ -106,7 +112,8 @@ class Linker:
         return out
 
     def link(self, question: str) -> dict:
-        top = self.retrieve(question)
+        ranked = self.rank(question)
+        top = [t for t, _, _ in ranked]
         tables = self.expand(top)
         subset = {t: self.schema[t] for t in tables}
         text = db.format_schema(subset)
@@ -114,7 +121,11 @@ class Linker:
         if joins:
             text += "\n\nINFERRED JOINS (not declared in the database; guessed from shared column names):\n"
             text += "\n".join(joins)
-        return {"retrieved": top, "tables": tables, "schema_text": text}
+        details = [{"table": t, "how": "retrieved", "score": round(s_, 3), "match": c or "(table)"}
+                   for t, s_, c in ranked]
+        details += [{"table": t, "how": "added (key neighbor)", "score": None, "match": ""}
+                    for t in tables if t not in top]
+        return {"retrieved": top, "tables": tables, "schema_text": text, "details": details, "joins": joins}
 
 
 @lru_cache(maxsize=1)

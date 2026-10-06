@@ -85,3 +85,10 @@ Same flags (retry + assumptions + gate), 25 questions, temperature 0:
 - Aggregate-count stint questions (q06, q22) passed with and without the glossary; the model already used SUM when asked for a total. The gap is in ranking, not totals.
 - Remaining failures: q03 and q14 are false refusals by the gate ("Salaries ends in 2016, so there is no last season"), even though q14 asks for "the most recent season with salary data". The gate is over-refusing time questions; not touched here.
 - Two flipped questions out of 25, one run each: this is suggestive, not statistically strong.
+
+## Improvements branch, step 2: UI transparency
+- `Linker.rank()` now returns (table, score, best-matching column) and `link()` returns per-table details and the join list; `ask()` passes them through as `link_details` and `joins`. The page shows them, flags SQL that reads tables that were not in the prompt, and keeps the last result in session state.
+- Running the USC question with linking on showed the memorization case directly: the page flagged `collegeplaying` as used but not sent. The inferred-join list was 19 lines for 7 tables (every pair among Batting/Fielding/Appearances/BattingPost/Pitching/Teams/People shares keys), so it is collapsed by default. This noise also goes to the model in the linked prompt.
+- Changing a sidebar option used to wipe the result, because it was only drawn on the run where Run was clicked. Fixed with `st.session_state`.
+- A long-running `streamlit run` keeps imported modules (`nl2sql.pipeline`) in memory; only `app.py` reloads. After the `semantic` argument was added, the old server raised `TypeError: ask() got an unexpected keyword argument 'semantic'` until restarted. Restart the server after changing anything under `nl2sql/`.
+- Writing source files through shell heredocs mangled backslashes twice (`\b` in a regex became a backspace character, `\n` in a string became a real newline). Both were caught by tests failing at collection; fixed by editing the files directly, and all `.py` files were scanned for control characters afterwards.

@@ -53,8 +53,7 @@ def is_refusal(out):
     return out.get("refused", False) or not out.get("sql") or "only SELECT" in err or "empty query" in err
 
 
-def tables_in(sql):
-    return {t.lower() for t in re.findall(r"\b(?:from|join)\s+\"?(\w+)", sql or "", re.IGNORECASE)}
+tables_in = db.tables_in
 
 
 def tag_failure(q, out):

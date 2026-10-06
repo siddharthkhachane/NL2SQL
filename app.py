@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from nl2sql import pipeline
+from nl2sql import db, pipeline
 
 RESULTS_DIR = Path(__file__).resolve().parent / "eval" / "results"
 
@@ -46,6 +46,25 @@ def html(text, cls):
     st.markdown(f'<div class="{cls}">{text}</div>', unsafe_allow_html=True)
 
 
+def show_schema(out, semantic):
+    """What the model was shown, and whether the SQL stayed inside it."""
+    st.markdown("##### Schema sent to the model")
+    if out.get("link_details"):
+        st.dataframe(pd.DataFrame(out["link_details"]).rename(columns={"how": "source", "match": "best match"}),
+                     hide_index=True)
+        if out.get("joins"):
+            with st.expander(f"Inferred joins ({len(out['joins'])}), guessed from shared column names"):
+                st.code("\n".join(out["joins"]), language=None)
+        outside = db.tables_in(out["sql"]) - {t.lower() for t in out["tables"]}
+        if outside:
+            html("The SQL uses tables that were not in the prompt: " + ", ".join(sorted(outside))
+                 + ". The model filled them in from memory.", "note")
+    else:
+        html("Full schema, every table, 3 sample values per column.", "stats")
+    if semantic:
+        html("Data glossary included.", "stats")
+
+
 st.set_page_config(page_title="Lahman NL2SQL", layout="centered")
 st.markdown(CSS, unsafe_allow_html=True)
 html("Lahman baseball database, 1871 to 2025", "kicker")
@@ -59,12 +78,17 @@ with ask_tab:
     retry = st.sidebar.checkbox("Retry once on error or empty result", value=True)
     assumptions = st.sidebar.checkbox("Return assumptions", value=True)
     gate = st.sidebar.checkbox("Refuse unanswerable questions", value=True)
+    semantic = st.sidebar.checkbox("Data glossary (stints, franchises)", value=True)
 
     question = st.text_input("Question", placeholder="Who hit the most home runs in 1997?",
                              label_visibility="collapsed")
     if st.button("RUN") and question.strip():
-        out = pipeline.ask(question.strip(), linking=linking, retry=retry, assumptions=assumptions, gate=gate)
+        out = pipeline.ask(question.strip(), linking=linking, retry=retry, assumptions=assumptions,
+                           gate=gate, semantic=semantic)
+        st.session_state["last"] = (out, semantic)
 
+    if "last" in st.session_state:
+        out, used_semantic = st.session_state["last"]
         if out["refused"]:
             html("The database cannot answer this question.", "note")
         elif out["error"]:
@@ -75,8 +99,7 @@ with ask_tab:
             st.dataframe(pd.DataFrame(out["rows"], columns=out["columns"]), hide_index=True)
         if out["sql"]:
             st.code(out["sql"], language="sql")
-        if out["tables"]:
-            html("tables: " + ", ".join(out["tables"]), "stats")
+        show_schema(out, used_semantic)
         stages = " &nbsp;·&nbsp; ".join(f"{k} {v:.2f}s" for k, v in out["timings"].items())
         html(stages + (" &nbsp;·&nbsp; retried" if out["retried"] else ""), "stats")
 

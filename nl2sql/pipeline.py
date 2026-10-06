@@ -42,6 +42,7 @@ def ask(question: str, linking: bool = False, retry: bool = False, assumptions: 
         linked = get_linker().link(question)
         schema_text = linked["schema_text"]
         result["tables"], result["retrieved"] = linked["tables"], linked["retrieved"]
+        result["link_details"], result["joins"] = linked["details"], linked["joins"]
     else:
         schema_text = _schema_text()
     result["timings"]["link" if linking else "schema"] = time.perf_counter() - t

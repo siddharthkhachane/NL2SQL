@@ -72,9 +72,28 @@ def test_ask_with_linking_uses_subset_schema(monkeypatch):
 
     class FakeLinker:
         def link(self, question):
-            return {"retrieved": ["Teams"], "tables": ["Teams", "People"], "schema_text": "SUBSET"}
+            return {"retrieved": ["Teams"], "tables": ["Teams", "People"], "schema_text": "SUBSET",
+                    "details": [{"table": "Teams", "how": "retrieved", "score": 0.5, "match": "(table)"}],
+                    "joins": ["Teams.teamID = People.playerID"]}
 
     monkeypatch.setattr(linking, "get_linker", lambda: FakeLinker())
     monkeypatch.setattr(pipeline, "generate_sql", lambda q, s: seen.setdefault("schema", s) and "SELECT 1")
     out = pipeline.ask("q", linking=True)
     assert seen["schema"] == "SUBSET" and out["tables"] == ["Teams", "People"] and "link" in out["timings"]
+
+
+def test_tables_in_scans_from_and_join():
+    sql = "SELECT * FROM Batting b JOIN People p ON b.playerID = p.playerID WHERE x IN (SELECT y FROM Teams)"
+    assert db.tables_in(sql) == {"batting", "people", "teams"}
+    assert db.tables_in(None) == set()
+
+
+@pytest.mark.skipif(not db.DB_PATH.exists(), reason="data/lahman.sqlite not present")
+def test_link_reports_scores_matches_and_added_neighbors():
+    out = linking.get_linker().link("How many home runs did Mark McGwire hit in 1997?")
+    retrieved = [d for d in out["details"] if d["how"] == "retrieved"]
+    added = [d for d in out["details"] if d["how"].startswith("added")]
+    assert len(retrieved) == 5 and all(0 < d["score"] <= 1 and d["match"] for d in retrieved)
+    assert [d["score"] for d in retrieved] == sorted((d["score"] for d in retrieved), reverse=True)
+    assert {d["table"] for d in added} == set(out["tables"]) - set(out["retrieved"])
+    assert any("Batting.playerID = People.playerID" == j for j in out["joins"]) or out["joins"]

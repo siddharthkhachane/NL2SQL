@@ -15,6 +15,11 @@ class UnsafeSQL(ValueError):
     pass
 
 
+def tables_in(sql: str) -> set[str]:
+    """Lower-case table names after FROM/JOIN (a rough scan; fine for display and eval tagging)."""
+    return {t.lower() for t in re.findall(r"\b(?:from|join)\s+\"?(\w+)", sql or "", re.IGNORECASE)}
+
+
 def connect(path=None) -> sqlite3.Connection:
     uri = f"file:{Path(path or DB_PATH).as_posix()}?mode=ro"
     return sqlite3.connect(uri, uri=True)
