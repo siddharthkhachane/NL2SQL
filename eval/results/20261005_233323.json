@@ -1,0 +1,637 @@
+{
+  "label": "before_semantic",
+  "timestamp": "2026-10-05T23:33:23",
+  "summary": {
+    "overall": {
+      "n": 25,
+      "exec_acc": 0.8,
+      "exact_match": 0.12
+    },
+    "answerable_only": {
+      "retry_rate": 0.0,
+      "first_attempt_acc": 0.773,
+      "final_acc": 0.773,
+      "unanswerable_refused": "3/3",
+      "false_refusals": 2
+    },
+    "retrieval_recall": null,
+    "by_join_bucket": {
+      "0": {
+        "n": 6,
+        "exec_acc": 0.833,
+        "exact_match": 0.5
+      },
+      "1": {
+        "n": 10,
+        "exec_acc": 0.8,
+        "exact_match": 0.0
+      },
+      "2": {
+        "n": 4,
+        "exec_acc": 0.5,
+        "exact_match": 0.0
+      },
+      "3+": {
+        "n": 2,
+        "exec_acc": 1.0,
+        "exact_match": 0.0
+      },
+      "n/a": {
+        "n": 3,
+        "exec_acc": 1.0,
+        "exact_match": 0.0
+      }
+    },
+    "by_trap": {
+      "duplicate_names": {
+        "n": 1,
+        "exec_acc": 1.0,
+        "exact_match": 0.0
+      },
+      "franchise": {
+        "n": 5,
+        "exec_acc": 0.8,
+        "exact_match": 0.0
+      },
+      "inconsistent_columns": {
+        "n": 1,
+        "exec_acc": 1.0,
+        "exact_match": 0.0
+      },
+      "join_key": {
+        "n": 1,
+        "exec_acc": 1.0,
+        "exact_match": 0.0
+      },
+      "none": {
+        "n": 4,
+        "exec_acc": 1.0,
+        "exact_match": 0.5
+      },
+      "stint": {
+        "n": 6,
+        "exec_acc": 0.667,
+        "exact_match": 0.0
+      },
+      "time": {
+        "n": 3,
+        "exec_acc": 0.333,
+        "exact_match": 0.0
+      },
+      "unanswerable": {
+        "n": 3,
+        "exec_acc": 1.0,
+        "exact_match": 0.0
+      },
+      "wide_table": {
+        "n": 1,
+        "exec_acc": 1.0,
+        "exact_match": 1.0
+      }
+    },
+    "by_split": {
+      "dev": {
+        "n": 13,
+        "exec_acc": 0.846,
+        "exact_match": 0.077
+      },
+      "heldout": {
+        "n": 7,
+        "exec_acc": 0.714,
+        "exact_match": 0.143
+      },
+      "heldout_new": {
+        "n": 5,
+        "exec_acc": 0.8,
+        "exact_match": 0.2
+      }
+    },
+    "failure_tags": {
+      "other": 2,
+      "stint": 2,
+      "schema_linking": 1
+    }
+  },
+  "records": [
+    {
+      "id": "q01",
+      "question": "Which team won the most games in 2001? Give the team name and wins.",
+      "trap": "wide_table",
+      "split": "dev",
+      "join_bucket": "0",
+      "pred_sql": "SELECT name, W FROM Teams WHERE yearID = 2001 ORDER BY W DESC LIMIT 1;",
+      "error": null,
+      "timings": {
+        "schema": 0.06295170000521466,
+        "generate": 3.015167699981248,
+        "execute": 0.0019175000197719783
+      },
+      "assumptions": "The question refers to the team with the most wins in the regular season of 2001.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": true,
+      "failure": null,
+      "first_attempt_match": true,
+      "latency": 3.083
+    },
+    {
+      "id": "q02",
+      "question": "How many players were born in Japan?",
+      "trap": "none",
+      "split": "heldout",
+      "join_bucket": "0",
+      "pred_sql": "SELECT COUNT(*) FROM People WHERE birthCountry = 'Japan';",
+      "error": null,
+      "timings": {
+        "schema": 1.200009137392044e-06,
+        "generate": 1.2975333000067621,
+        "execute": 0.007276600023033097
+      },
+      "assumptions": "none",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": true,
+      "failure": null,
+      "first_attempt_match": true,
+      "latency": 1.31
+    },
+    {
+      "id": "q03",
+      "question": "What was the highest salary last season?",
+      "trap": "time",
+      "split": "dev",
+      "join_bucket": "0",
+      "pred_sql": null,
+      "error": null,
+      "timings": {
+        "schema": 2.1999876480549574e-06,
+        "generate": 1.4581189999880735
+      },
+      "assumptions": "The Salaries table ends in 2016, so it does not contain data for the last season (2025).",
+      "retried": false,
+      "exec_match": false,
+      "exact_match": false,
+      "failure": "other",
+      "first_attempt_match": false,
+      "latency": 1.461
+    },
+    {
+      "id": "q04",
+      "question": "Which franchise has the most all-time wins? Give the franchise ID and total wins.",
+      "trap": "franchise",
+      "split": "dev",
+      "join_bucket": "0",
+      "pred_sql": "SELECT tf.franchID, SUM(t.W) AS total_wins FROM Teams t JOIN TeamsFranchises tf ON t.franchID = tf.franchID GROUP BY tf.franchID ORDER BY total_wins DESC LIMIT 1;",
+      "error": null,
+      "timings": {
+        "schema": 1.00000761449337e-06,
+        "generate": 2.0794305999879725,
+        "execute": 0.003434700018260628
+      },
+      "assumptions": "The question is interpreted as asking for the franchise with the most wins across all seasons in the dataset.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "first_attempt_match": true,
+      "latency": 2.086
+    },
+    {
+      "id": "q05",
+      "question": "What was the total home attendance of the Boston Red Sox in 2019?",
+      "trap": "inconsistent_columns",
+      "split": "heldout",
+      "join_bucket": "0",
+      "pred_sql": "SELECT SUM(attendance) AS total_attendance FROM HomeGames WHERE yearkey = 2019 AND teamkey = 'BOS';",
+      "error": null,
+      "timings": {
+        "schema": 1.4999823179095984e-06,
+        "generate": 1.5479895999887958,
+        "execute": 0.0016211999754887074
+      },
+      "assumptions": "Assumed 'Boston Red Sox' corresponds to 'BOS' in the HomeGames table.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "first_attempt_match": true,
+      "latency": 1.551
+    },
+    {
+      "id": "q06",
+      "question": "How many home runs did Mark McGwire hit in 1997?",
+      "trap": "stint",
+      "split": "dev",
+      "join_bucket": "1",
+      "pred_sql": "SELECT SUM(HR) AS home_runs FROM Batting WHERE playerID = 'mcgwima01' AND yearID = 1997;",
+      "error": null,
+      "timings": {
+        "schema": 1.300009898841381e-06,
+        "generate": 11.479090000008,
+        "execute": 0.012113399978261441
+      },
+      "assumptions": "Assumed 'Mark McGwire' corresponds to playerID 'mcgwima01'.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "first_attempt_match": true,
+      "latency": 11.505
+    },
+    {
+      "id": "q07",
+      "question": "Who hit the most home runs in 1997? Give first name, last name and home runs.",
+      "trap": "stint",
+      "split": "heldout",
+      "join_bucket": "1",
+      "pred_sql": "SELECT p.nameFirst, p.nameLast, b.HR FROM Batting b JOIN People p ON b.playerID = p.playerID WHERE b.yearID = 1997 ORDER BY b.HR DESC LIMIT 1;",
+      "error": null,
+      "timings": {
+        "schema": 1.700012944638729e-06,
+        "generate": 14.25991759999306,
+        "execute": 0.024780199979431927
+      },
+      "assumptions": "none",
+      "retried": false,
+      "exec_match": false,
+      "exact_match": false,
+      "failure": "stint",
+      "first_attempt_match": false,
+      "latency": 14.309
+    },
+    {
+      "id": "q08",
+      "question": "For each player named Chris Young, give the playerID and career home runs.",
+      "trap": "duplicate_names",
+      "split": "dev",
+      "join_bucket": "1",
+      "pred_sql": "SELECT b.playerID, SUM(b.HR) AS career_home_runs FROM People p JOIN Batting b ON p.playerID = b.playerID WHERE p.nameFirst = 'Chris' AND p.nameLast = 'Young' GROUP BY b.playerID;",
+      "error": null,
+      "timings": {
+        "schema": 2.200016751885414e-06,
+        "generate": 14.296234799985541,
+        "execute": 0.06571799999801442
+      },
+      "assumptions": "The query assumes that all players named Chris Young are distinct and identified by their playerID.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "first_attempt_match": true,
+      "latency": 14.433
+    },
+    {
+      "id": "q09",
+      "question": "Which franchise has hit the most home runs all-time? Give the franchise name and total home runs.",
+      "trap": "franchise",
+      "split": "dev",
+      "join_bucket": "1",
+      "pred_sql": "SELECT tf.franchName, SUM(t.HR) AS total_home_runs FROM Teams t JOIN TeamsFranchises tf ON t.franchID = tf.franchID GROUP BY tf.franchName ORDER BY total_home_runs DESC LIMIT 1;",
+      "error": null,
+      "timings": {
+        "schema": 2.500019036233425e-06,
+        "generate": 13.955898299987894,
+        "execute": 0.003925699973478913
+      },
+      "assumptions": "The question is interpreted as asking for the total home runs hit by all teams under a franchise across all years.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "first_attempt_match": true,
+      "latency": 13.965
+    },
+    {
+      "id": "q10",
+      "question": "Who led MLB in home runs last season? Give first name, last name and home runs.",
+      "trap": "time",
+      "split": "heldout",
+      "join_bucket": "1",
+      "pred_sql": "SELECT p.nameFirst, p.nameLast, b.HR FROM Batting b JOIN People p ON b.playerID = p.playerID WHERE b.yearID = 2025 ORDER BY b.HR DESC LIMIT 1;",
+      "error": null,
+      "timings": {
+        "schema": 1.4999823179095984e-06,
+        "generate": 13.692417300015222,
+        "execute": 0.023935000004712492
+      },
+      "assumptions": "The term 'last season' refers to the most recent complete season in the dataset, which is 2025.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "first_attempt_match": true,
+      "latency": 13.752
+    },
+    {
+      "id": "q11",
+      "question": "Which team had the highest total payroll in 2016? Give the team name and payroll.",
+      "trap": "join_key",
+      "split": "dev",
+      "join_bucket": "1",
+      "pred_sql": "SELECT t.name, SUM(s.salary) AS total_payroll FROM Salaries s JOIN Teams t ON s.teamID = t.teamID AND s.yearID = t.yearID WHERE s.yearID = 2016 GROUP BY t.name ORDER BY total_payroll DESC LIMIT 1;",
+      "error": null,
+      "timings": {
+        "schema": 2.4999899324029684e-06,
+        "generate": 14.623447300022235,
+        "execute": 0.004964399995515123
+      },
+      "assumptions": "The question refers to the total payroll of a team for the year 2016, and the Salaries table provides the necessary data.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "first_attempt_match": true,
+      "latency": 14.633
+    },
+    {
+      "id": "q12",
+      "question": "List the first and last names of players who hit 40 or more home runs in 2001 and were All-Stars that year.",
+      "trap": "stint",
+      "split": "dev",
+      "join_bucket": "2",
+      "pred_sql": "SELECT p.nameFirst, p.nameLast FROM Batting b JOIN AllstarFull a ON b.playerID = a.playerID AND b.yearID = a.yearID JOIN People p ON b.playerID = p.playerID WHERE b.yearID = 2001 AND b.HR >= 40 AND a.yearID = 2001;",
+      "error": null,
+      "timings": {
+        "schema": 1.800013706088066e-06,
+        "generate": 14.079637499991804,
+        "execute": 0.02280340000288561
+      },
+      "assumptions": "none",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "first_attempt_match": true,
+      "latency": 14.127
+    },
+    {
+      "id": "q13",
+      "question": "How many different players have played for the Los Angeles Dodgers franchise, including its Brooklyn years?",
+      "trap": "franchise",
+      "split": "heldout",
+      "join_bucket": "2",
+      "pred_sql": "SELECT COUNT(DISTINCT playerID) FROM Appearances WHERE teamID IN (SELECT teamID FROM Teams WHERE franchID = 'LAD');",
+      "error": null,
+      "timings": {
+        "schema": 2.0999868866056204e-06,
+        "generate": 13.895415899984073,
+        "execute": 0.025429100001929328
+      },
+      "assumptions": "The Los Angeles Dodgers franchise, including its Brooklyn years, is represented by the franchise ID 'LAD' in the Teams table.",
+      "retried": false,
+      "exec_match": false,
+      "exact_match": false,
+      "failure": "schema_linking",
+      "first_attempt_match": false,
+      "latency": 14.132
+    },
+    {
+      "id": "q14",
+      "question": "Who was the highest-paid New York Yankees player in the most recent season with salary data? Give first name, last name and salary.",
+      "trap": "time",
+      "split": "dev",
+      "join_bucket": "2",
+      "pred_sql": null,
+      "error": null,
+      "timings": {
+        "schema": 3.1999952625483274e-06,
+        "generate": 13.562588800006779
+      },
+      "assumptions": "The Salaries table ends in 2016, so we cannot determine the highest-paid New York Yankees player in the most recent season.",
+      "retried": false,
+      "exec_match": false,
+      "exact_match": false,
+      "failure": "other",
+      "first_attempt_match": false,
+      "latency": 13.581
+    },
+    {
+      "id": "q15",
+      "question": "Which Hall of Fame inducted player has the most career home runs? Give first name, last name and home runs.",
+      "trap": "none",
+      "split": "dev",
+      "join_bucket": "2",
+      "pred_sql": "SELECT p.nameFirst, p.nameLast, SUM(b.HR) AS careerHR FROM HallOfFame h JOIN Batting b ON h.playerID = b.playerID JOIN People p ON h.playerID = p.playerID WHERE h.inducted = 'Y' GROUP BY p.playerID ORDER BY careerHR DESC LIMIT 1;",
+      "error": null,
+      "timings": {
+        "schema": 3.1999952625483274e-06,
+        "generate": 14.60082120000152,
+        "execute": 0.08594410002115183
+      },
+      "assumptions": "The query assumes that the player with the most career home runs is the one with the highest sum of home runs across all seasons in the Batting table.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "first_attempt_match": true,
+      "latency": 14.769
+    },
+    {
+      "id": "q16",
+      "question": "List the first and last names of players who attended the University of Southern California and hit at least 100 career home runs, with their career home runs.",
+      "trap": "none",
+      "split": "dev",
+      "join_bucket": "3+",
+      "pred_sql": "SELECT p.nameFirst, p.nameLast, SUM(b.HR) AS careerHR FROM CollegePlaying cp JOIN Schools s ON cp.schoolID = s.schoolID JOIN People p ON cp.playerID = p.playerID JOIN Batting b ON p.playerID = b.playerID WHERE s.name_full = 'University of Southern California' GROUP BY p.playerID HAVING careerHR >= 100;",
+      "error": null,
+      "timings": {
+        "schema": 2.9999937396496534e-06,
+        "generate": 13.985137899988331,
+        "execute": 0.07737970000016503
+      },
+      "assumptions": "The question assumes that the 'University of Southern California' is correctly represented in the Schools table.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "first_attempt_match": true,
+      "latency": 14.144
+    },
+    {
+      "id": "q17",
+      "question": "For the 2001 Seattle Mariners, list each player's first name, last name, home runs for Seattle and salary, for the top 5 salaries.",
+      "trap": "stint",
+      "split": "heldout",
+      "join_bucket": "3+",
+      "pred_sql": "SELECT p.nameFirst, p.nameLast, b.HR, s.salary FROM Salaries s JOIN People p ON s.playerID = p.playerID JOIN Batting b ON s.playerID = b.playerID AND s.yearID = b.yearID WHERE s.yearID = 2001 AND s.teamID = 'SEA' AND b.teamID = 'SEA' ORDER BY s.salary DESC LIMIT 5;",
+      "error": null,
+      "timings": {
+        "schema": 1.7999846022576094e-06,
+        "generate": 14.34982659999514,
+        "execute": 0.02655169999343343
+      },
+      "assumptions": "Assumed 'Seattle Mariners' refers to teamID 'SEA' and that 'home runs for Seattle' means home runs recorded in the Batting table for teamID 'SEA' in 2001.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "first_attempt_match": true,
+      "latency": 14.401
+    },
+    {
+      "id": "q18",
+      "question": "How many pitches did Clayton Kershaw throw in his last start?",
+      "trap": "unanswerable",
+      "split": "dev",
+      "join_bucket": "n/a",
+      "pred_sql": null,
+      "error": null,
+      "timings": {
+        "schema": 2.1999876480549574e-06,
+        "generate": 13.488579500000924
+      },
+      "assumptions": "The database does not contain pitch-level data or specific game logs to determine the number of pitches thrown in a single game.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "refused": true,
+      "latency": 13.489
+    },
+    {
+      "id": "q19",
+      "question": "What was Aaron Judge's batting average with runners in scoring position in 2025?",
+      "trap": "unanswerable",
+      "split": "dev",
+      "join_bucket": "n/a",
+      "pred_sql": null,
+      "error": null,
+      "timings": {
+        "schema": 1.100008375942707e-06,
+        "generate": 14.345241400005762
+      },
+      "assumptions": "The database does not contain play-by-play data or specific situational statistics such as batting average with runners in scoring position.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "refused": true,
+      "latency": 14.345
+    },
+    {
+      "id": "q20",
+      "question": "How many home runs has Shohei Ohtani hit so far in the 2026 season?",
+      "trap": "unanswerable",
+      "split": "heldout",
+      "join_bucket": "n/a",
+      "pred_sql": null,
+      "error": null,
+      "timings": {
+        "schema": 1.1999800335615873e-06,
+        "generate": 13.857881300005829
+      },
+      "assumptions": "The database does not contain data for the 2026 season as it ends in 2025.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "refused": true,
+      "latency": 13.858
+    },
+    {
+      "id": "q21",
+      "question": "Who stole the most bases in 2011? Give first name, last name and stolen bases.",
+      "trap": "stint",
+      "split": "heldout_new",
+      "join_bucket": "1",
+      "pred_sql": "SELECT p.nameFirst, p.nameLast, b.SB FROM Batting b JOIN People p ON b.playerID = p.playerID WHERE b.yearID = 2011 ORDER BY b.SB DESC LIMIT 1;",
+      "error": null,
+      "timings": {
+        "schema": 1.100008375942707e-06,
+        "generate": 14.43859119998524,
+        "execute": 0.023470799991628155
+      },
+      "assumptions": "none",
+      "retried": false,
+      "exec_match": false,
+      "exact_match": false,
+      "failure": "stint",
+      "first_attempt_match": false,
+      "latency": 14.485
+    },
+    {
+      "id": "q22",
+      "question": "How many walks did Adam Dunn draw in 2008?",
+      "trap": "stint",
+      "split": "heldout_new",
+      "join_bucket": "1",
+      "pred_sql": "SELECT SUM(BB) AS walks FROM Batting WHERE playerID = 'dunnad01' AND yearID = 2008;",
+      "error": null,
+      "timings": {
+        "schema": 2.200016751885414e-06,
+        "generate": 14.091816600004677,
+        "execute": 0.012715599994407967
+      },
+      "assumptions": "Assumed 'Adam Dunn' corresponds to playerID 'dunnad01'.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "first_attempt_match": true,
+      "latency": 14.12
+    },
+    {
+      "id": "q23",
+      "question": "How many total wins does the Atlanta Braves franchise have all-time?",
+      "trap": "franchise",
+      "split": "heldout_new",
+      "join_bucket": "1",
+      "pred_sql": "SELECT SUM(W) AS total_wins FROM Teams WHERE franchID = 'ATL';",
+      "error": null,
+      "timings": {
+        "schema": 2.0999868866056204e-06,
+        "generate": 14.080098500009626,
+        "execute": 0.0018687999981921166
+      },
+      "assumptions": "Assumed 'Atlanta Braves franchise' refers to the franchise with franchID 'ATL'.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "first_attempt_match": true,
+      "latency": 14.086
+    },
+    {
+      "id": "q24",
+      "question": "How many league pennants has the Los Angeles Dodgers franchise won in total?",
+      "trap": "franchise",
+      "split": "heldout_new",
+      "join_bucket": "1",
+      "pred_sql": "SELECT COUNT(*) FROM Teams WHERE franchID = 'LAD' AND LgWin = 'Y';",
+      "error": null,
+      "timings": {
+        "schema": 1.500011421740055e-06,
+        "generate": 13.803337999997893,
+        "execute": 0.0019782000163104385
+      },
+      "assumptions": "The Los Angeles Dodgers franchise is identified by the 'LAD' franchID in the Teams table.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "first_attempt_match": true,
+      "latency": 13.807
+    },
+    {
+      "id": "q25",
+      "question": "How many wins did the 1927 New York Yankees have?",
+      "trap": "none",
+      "split": "heldout_new",
+      "join_bucket": "0",
+      "pred_sql": "SELECT W FROM Teams WHERE yearID = 1927 AND name = 'New York Yankees';",
+      "error": null,
+      "timings": {
+        "schema": 1.00000761449337e-06,
+        "generate": 14.338663100003032,
+        "execute": 0.001438899984350428
+      },
+      "assumptions": "The team name 'New York Yankees' is used to identify the team in the Teams table.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": true,
+      "failure": null,
+      "first_attempt_match": true,
+      "latency": 14.341
+    }
+  ]
+}

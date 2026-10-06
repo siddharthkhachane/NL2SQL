@@ -65,3 +65,23 @@ All runs use the full-schema pipeline (no linking), gpt-4o, temperature 0. Each 
 - The first CSS override (`[class*="st-"] { font-family: ... }`) replaced the Material icon font, so the sidebar toggle rendered as the text "double_arrow_right". Found by screenshot; icon elements are now excluded from the font rule.
 - Streamlit headings ignore the body font and the text input's fill sits on a wrapper div, not the `<input>`; both needed their own selectors (found by inspecting computed styles in the browser).
 - Running the real pipeline from the page on the 1997 home run question reproduced the known stint failure (Griffey, 56 instead of McGwire, 58) with assumptions "none".
+
+## Improvements branch, step 1: semantic layer
+Added `nl2sql/semantic.py`: a short glossary (stints, franchises) prepended to the schema when `semantic=True` / `--semantic`. Written from the data's structure, not from eval questions. I had already seen the baseline failures on the original held-out questions (q07, q13), so those are not clean test data; 5 new held-out questions (`heldout_new`, q21-q25: 2 stint, 2 franchise, 1 control) were written and verified before the glossary existed. A first draft of the glossary used the Braves as its franchise example, which mirrors q23; caught on review and changed to the Athletics, who appear in no question.
+
+Same flags (retry + assumptions + gate), 25 questions, temperature 0:
+
+| split | before | with glossary |
+|---|---|---|
+| all (25) | 0.80 | 0.88 |
+| dev (13) | 0.85 | 0.85 |
+| heldout (7) | 0.71 | 0.86 |
+| heldout_new (5) | 0.80 | 1.00 |
+| stint questions (6) | 0.67 | 1.00 |
+| franchise questions (5) | 0.80 | 0.80 |
+
+- Only two questions flipped, both "who led in a stat" (q07 most HR in 1997, q21 most stolen bases in 2011): the model now sums per player before ranking. No question got worse.
+- The franchise entry shows no measured effect. gpt-4o already handled q23 and q24 (specific franchise, join to TeamsFranchises) without it, so those two questions did not discriminate. The remaining franchise failure, q13, is the Appearances-vs-Batting choice, which the glossary does not address.
+- Aggregate-count stint questions (q06, q22) passed with and without the glossary; the model already used SUM when asked for a total. The gap is in ranking, not totals.
+- Remaining failures: q03 and q14 are false refusals by the gate ("Salaries ends in 2016, so there is no last season"), even though q14 asks for "the most recent season with salary data". The gate is over-refusing time questions; not touched here.
+- Two flipped questions out of 25, one run each: this is suggestive, not statistically strong.

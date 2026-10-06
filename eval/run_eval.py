@@ -212,12 +212,13 @@ def show_gold():
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("--split", default="all", choices=["all", "dev", "heldout"])
+    ap.add_argument("--split", default="all", choices=["all", "dev", "heldout", "heldout_new"])
     ap.add_argument("--label", default="baseline")
     ap.add_argument("--linking", action="store_true", help="use schema linking")
     ap.add_argument("--retry", action="store_true", help="retry once on SQL error or empty result")
     ap.add_argument("--assumptions", action="store_true", help="model states how it resolved ambiguity")
     ap.add_argument("--gate", action="store_true", help="model may refuse unanswerable questions")
+    ap.add_argument("--semantic", action="store_true", help="add the data glossary to the prompt")
     ap.add_argument("--compare", nargs=2, metavar=("A", "B"), help="compare two saved result files")
     ap.add_argument("--gold", action="store_true", help="print row count and sample for each gold query")
     args = ap.parse_args()
@@ -227,6 +228,7 @@ if __name__ == "__main__":
         show_gold()
     else:
         from nl2sql.pipeline import ask
-        flags = {"linking": args.linking, "retry": args.retry, "assumptions": args.assumptions, "gate": args.gate}
+        flags = {"linking": args.linking, "retry": args.retry, "assumptions": args.assumptions, "gate": args.gate,
+                 "semantic": args.semantic}
         label = args.label if args.label != "baseline" else "+".join(k for k, v in flags.items() if v) or "baseline"
         print_report(run(lambda q: ask(q, **flags), args.split, label))

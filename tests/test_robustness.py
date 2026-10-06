@@ -118,3 +118,13 @@ def test_eval_scores_refusal_and_first_attempt():
     s = ev.summarize([rec, wrong])["answerable_only"]
     assert s["retry_rate"] == 0.5 and s["first_attempt_acc"] == 0.0 and s["final_acc"] == 0.5
     assert s["false_refusals"] == 1
+
+
+def test_semantic_glossary_is_added_only_when_requested(monkeypatch):
+    seen = []
+    monkeypatch.setattr(pipeline, "generate_sql", lambda q, s: seen.append(s) or GOOD)
+    pipeline.ask("q")
+    pipeline.ask("q", semantic=True)
+    assert "NOTES ABOUT THIS DATA" not in seen[0] and "TABLE Batting" in seen[0]
+    assert seen[1].startswith("NOTES ABOUT THIS DATA") and "stint" in seen[1] and "franchID" in seen[1]
+    assert "TABLE Batting" in seen[1]

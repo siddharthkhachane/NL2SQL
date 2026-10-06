@@ -1,59 +1,202 @@
 [
-  {"id": "q01", "question": "Which team won the most games in 2001? Give the team name and wins.",
-   "gold_sql": "SELECT name, W FROM Teams WHERE yearID = 2001 ORDER BY W DESC LIMIT 1",
-   "join_count": 0, "trap": "wide_table", "split": "dev"},
-  {"id": "q02", "question": "How many players were born in Japan?",
-   "gold_sql": "SELECT COUNT(*) FROM People WHERE birthCountry = 'Japan'",
-   "join_count": 0, "trap": "none", "split": "heldout"},
-  {"id": "q03", "question": "What was the highest salary last season?",
-   "gold_sql": "SELECT MAX(salary) FROM Salaries WHERE yearID = (SELECT MAX(yearID) FROM Salaries)",
-   "join_count": 0, "trap": "time", "split": "dev"},
-  {"id": "q04", "question": "Which franchise has the most all-time wins? Give the franchise ID and total wins.",
-   "gold_sql": "SELECT franchID, SUM(W) AS wins FROM Teams GROUP BY franchID ORDER BY wins DESC LIMIT 1",
-   "join_count": 0, "trap": "franchise", "split": "dev"},
-  {"id": "q05", "question": "What was the total home attendance of the Boston Red Sox in 2019?",
-   "gold_sql": "SELECT SUM(attendance) FROM HomeGames WHERE yearkey = 2019 AND teamkey = 'BOS'",
-   "join_count": 0, "trap": "inconsistent_columns", "split": "heldout"},
-  {"id": "q06", "question": "How many home runs did Mark McGwire hit in 1997?",
-   "gold_sql": "SELECT SUM(b.HR) FROM Batting b JOIN People p ON b.playerID = p.playerID WHERE p.nameFirst = 'Mark' AND p.nameLast = 'McGwire' AND b.yearID = 1997",
-   "join_count": 1, "trap": "stint", "split": "dev"},
-  {"id": "q07", "question": "Who hit the most home runs in 1997? Give first name, last name and home runs.",
-   "gold_sql": "SELECT p.nameFirst, p.nameLast, SUM(b.HR) AS hr FROM Batting b JOIN People p ON b.playerID = p.playerID WHERE b.yearID = 1997 GROUP BY b.playerID ORDER BY hr DESC LIMIT 1",
-   "join_count": 1, "trap": "stint", "split": "heldout"},
-  {"id": "q08", "question": "For each player named Chris Young, give the playerID and career home runs.",
-   "gold_sql": "SELECT p.playerID, SUM(b.HR) FROM People p JOIN Batting b ON p.playerID = b.playerID WHERE p.nameFirst = 'Chris' AND p.nameLast = 'Young' GROUP BY p.playerID",
-   "join_count": 1, "trap": "duplicate_names", "split": "dev"},
-  {"id": "q09", "question": "Which franchise has hit the most home runs all-time? Give the franchise name and total home runs.",
-   "gold_sql": "SELECT f.franchName, SUM(t.HR) AS hr FROM Teams t JOIN TeamsFranchises f ON t.franchID = f.franchID GROUP BY t.franchID ORDER BY hr DESC LIMIT 1",
-   "join_count": 1, "trap": "franchise", "split": "dev"},
-  {"id": "q10", "question": "Who led MLB in home runs last season? Give first name, last name and home runs.",
-   "gold_sql": "SELECT p.nameFirst, p.nameLast, SUM(b.HR) AS hr FROM Batting b JOIN People p ON b.playerID = p.playerID WHERE b.yearID = (SELECT MAX(yearID) FROM Batting) GROUP BY b.playerID ORDER BY hr DESC LIMIT 1",
-   "join_count": 1, "trap": "time", "split": "heldout"},
-  {"id": "q11", "question": "Which team had the highest total payroll in 2016? Give the team name and payroll.",
-   "gold_sql": "SELECT t.name, SUM(s.salary) AS payroll FROM Salaries s JOIN Teams t ON s.teamID = t.teamID AND s.yearID = t.yearID WHERE s.yearID = 2016 GROUP BY t.name ORDER BY payroll DESC LIMIT 1",
-   "join_count": 1, "trap": "join_key", "split": "dev"},
-  {"id": "q12", "question": "List the first and last names of players who hit 40 or more home runs in 2001 and were All-Stars that year.",
-   "gold_sql": "SELECT DISTINCT p.nameFirst, p.nameLast FROM (SELECT playerID, SUM(HR) AS hr FROM Batting WHERE yearID = 2001 GROUP BY playerID HAVING SUM(HR) >= 40) b JOIN AllstarFull a ON a.playerID = b.playerID AND a.yearID = 2001 JOIN People p ON p.playerID = b.playerID",
-   "join_count": 2, "trap": "stint", "split": "dev"},
-  {"id": "q13", "question": "How many different players have played for the Los Angeles Dodgers franchise, including its Brooklyn years?",
-   "gold_sql": "SELECT COUNT(DISTINCT b.playerID) FROM Batting b JOIN Teams t ON b.teamID = t.teamID AND b.yearID = t.yearID JOIN TeamsFranchises f ON t.franchID = f.franchID WHERE f.franchName = 'Los Angeles Dodgers'",
-   "join_count": 2, "trap": "franchise", "split": "heldout"},
-  {"id": "q14", "question": "Who was the highest-paid New York Yankees player in the most recent season with salary data? Give first name, last name and salary.",
-   "gold_sql": "SELECT p.nameFirst, p.nameLast, s.salary FROM Salaries s JOIN People p ON s.playerID = p.playerID JOIN Teams t ON s.teamID = t.teamID AND s.yearID = t.yearID WHERE t.name = 'New York Yankees' AND s.yearID = (SELECT MAX(yearID) FROM Salaries) ORDER BY s.salary DESC LIMIT 1",
-   "join_count": 2, "trap": "time", "split": "dev"},
-  {"id": "q15", "question": "Which Hall of Fame inducted player has the most career home runs? Give first name, last name and home runs.",
-   "gold_sql": "SELECT p.nameFirst, p.nameLast, SUM(b.HR) AS hr FROM HallOfFame h JOIN People p ON h.playerID = p.playerID JOIN Batting b ON b.playerID = p.playerID WHERE h.inducted = 'Y' AND h.category = 'Player' GROUP BY p.playerID ORDER BY hr DESC LIMIT 1",
-   "join_count": 2, "trap": "none", "split": "dev"},
-  {"id": "q16", "question": "List the first and last names of players who attended the University of Southern California and hit at least 100 career home runs, with their career home runs.",
-   "gold_sql": "SELECT p.nameFirst, p.nameLast, SUM(b.HR) AS hr FROM Schools s JOIN CollegePlaying c ON s.schoolID = c.schoolID JOIN People p ON c.playerID = p.playerID JOIN Batting b ON b.playerID = p.playerID WHERE s.name_full = 'University of Southern California' GROUP BY p.playerID HAVING SUM(b.HR) >= 100",
-   "join_count": 3, "trap": "none", "split": "dev"},
-  {"id": "q17", "question": "For the 2001 Seattle Mariners, list each player's first name, last name, home runs for Seattle and salary, for the top 5 salaries.",
-   "gold_sql": "SELECT p.nameFirst, p.nameLast, SUM(b.HR) AS hr, s.salary FROM Salaries s JOIN Teams t ON s.teamID = t.teamID AND s.yearID = t.yearID JOIN People p ON s.playerID = p.playerID JOIN Batting b ON b.playerID = s.playerID AND b.yearID = s.yearID AND b.teamID = s.teamID WHERE t.name = 'Seattle Mariners' AND s.yearID = 2001 GROUP BY s.playerID ORDER BY s.salary DESC LIMIT 5",
-   "join_count": 3, "trap": "stint", "split": "heldout"},
-  {"id": "q18", "question": "How many pitches did Clayton Kershaw throw in his last start?",
-   "gold_sql": null, "join_count": null, "trap": "unanswerable", "split": "dev"},
-  {"id": "q19", "question": "What was Aaron Judge's batting average with runners in scoring position in 2025?",
-   "gold_sql": null, "join_count": null, "trap": "unanswerable", "split": "dev"},
-  {"id": "q20", "question": "How many home runs has Shohei Ohtani hit so far in the 2026 season?",
-   "gold_sql": null, "join_count": null, "trap": "unanswerable", "split": "heldout"}
+  {
+    "id": "q01",
+    "question": "Which team won the most games in 2001? Give the team name and wins.",
+    "gold_sql": "SELECT name, W FROM Teams WHERE yearID = 2001 ORDER BY W DESC LIMIT 1",
+    "join_count": 0,
+    "trap": "wide_table",
+    "split": "dev"
+  },
+  {
+    "id": "q02",
+    "question": "How many players were born in Japan?",
+    "gold_sql": "SELECT COUNT(*) FROM People WHERE birthCountry = 'Japan'",
+    "join_count": 0,
+    "trap": "none",
+    "split": "heldout"
+  },
+  {
+    "id": "q03",
+    "question": "What was the highest salary last season?",
+    "gold_sql": "SELECT MAX(salary) FROM Salaries WHERE yearID = (SELECT MAX(yearID) FROM Salaries)",
+    "join_count": 0,
+    "trap": "time",
+    "split": "dev"
+  },
+  {
+    "id": "q04",
+    "question": "Which franchise has the most all-time wins? Give the franchise ID and total wins.",
+    "gold_sql": "SELECT franchID, SUM(W) AS wins FROM Teams GROUP BY franchID ORDER BY wins DESC LIMIT 1",
+    "join_count": 0,
+    "trap": "franchise",
+    "split": "dev"
+  },
+  {
+    "id": "q05",
+    "question": "What was the total home attendance of the Boston Red Sox in 2019?",
+    "gold_sql": "SELECT SUM(attendance) FROM HomeGames WHERE yearkey = 2019 AND teamkey = 'BOS'",
+    "join_count": 0,
+    "trap": "inconsistent_columns",
+    "split": "heldout"
+  },
+  {
+    "id": "q06",
+    "question": "How many home runs did Mark McGwire hit in 1997?",
+    "gold_sql": "SELECT SUM(b.HR) FROM Batting b JOIN People p ON b.playerID = p.playerID WHERE p.nameFirst = 'Mark' AND p.nameLast = 'McGwire' AND b.yearID = 1997",
+    "join_count": 1,
+    "trap": "stint",
+    "split": "dev"
+  },
+  {
+    "id": "q07",
+    "question": "Who hit the most home runs in 1997? Give first name, last name and home runs.",
+    "gold_sql": "SELECT p.nameFirst, p.nameLast, SUM(b.HR) AS hr FROM Batting b JOIN People p ON b.playerID = p.playerID WHERE b.yearID = 1997 GROUP BY b.playerID ORDER BY hr DESC LIMIT 1",
+    "join_count": 1,
+    "trap": "stint",
+    "split": "heldout"
+  },
+  {
+    "id": "q08",
+    "question": "For each player named Chris Young, give the playerID and career home runs.",
+    "gold_sql": "SELECT p.playerID, SUM(b.HR) FROM People p JOIN Batting b ON p.playerID = b.playerID WHERE p.nameFirst = 'Chris' AND p.nameLast = 'Young' GROUP BY p.playerID",
+    "join_count": 1,
+    "trap": "duplicate_names",
+    "split": "dev"
+  },
+  {
+    "id": "q09",
+    "question": "Which franchise has hit the most home runs all-time? Give the franchise name and total home runs.",
+    "gold_sql": "SELECT f.franchName, SUM(t.HR) AS hr FROM Teams t JOIN TeamsFranchises f ON t.franchID = f.franchID GROUP BY t.franchID ORDER BY hr DESC LIMIT 1",
+    "join_count": 1,
+    "trap": "franchise",
+    "split": "dev"
+  },
+  {
+    "id": "q10",
+    "question": "Who led MLB in home runs last season? Give first name, last name and home runs.",
+    "gold_sql": "SELECT p.nameFirst, p.nameLast, SUM(b.HR) AS hr FROM Batting b JOIN People p ON b.playerID = p.playerID WHERE b.yearID = (SELECT MAX(yearID) FROM Batting) GROUP BY b.playerID ORDER BY hr DESC LIMIT 1",
+    "join_count": 1,
+    "trap": "time",
+    "split": "heldout"
+  },
+  {
+    "id": "q11",
+    "question": "Which team had the highest total payroll in 2016? Give the team name and payroll.",
+    "gold_sql": "SELECT t.name, SUM(s.salary) AS payroll FROM Salaries s JOIN Teams t ON s.teamID = t.teamID AND s.yearID = t.yearID WHERE s.yearID = 2016 GROUP BY t.name ORDER BY payroll DESC LIMIT 1",
+    "join_count": 1,
+    "trap": "join_key",
+    "split": "dev"
+  },
+  {
+    "id": "q12",
+    "question": "List the first and last names of players who hit 40 or more home runs in 2001 and were All-Stars that year.",
+    "gold_sql": "SELECT DISTINCT p.nameFirst, p.nameLast FROM (SELECT playerID, SUM(HR) AS hr FROM Batting WHERE yearID = 2001 GROUP BY playerID HAVING SUM(HR) >= 40) b JOIN AllstarFull a ON a.playerID = b.playerID AND a.yearID = 2001 JOIN People p ON p.playerID = b.playerID",
+    "join_count": 2,
+    "trap": "stint",
+    "split": "dev"
+  },
+  {
+    "id": "q13",
+    "question": "How many different players have played for the Los Angeles Dodgers franchise, including its Brooklyn years?",
+    "gold_sql": "SELECT COUNT(DISTINCT b.playerID) FROM Batting b JOIN Teams t ON b.teamID = t.teamID AND b.yearID = t.yearID JOIN TeamsFranchises f ON t.franchID = f.franchID WHERE f.franchName = 'Los Angeles Dodgers'",
+    "join_count": 2,
+    "trap": "franchise",
+    "split": "heldout"
+  },
+  {
+    "id": "q14",
+    "question": "Who was the highest-paid New York Yankees player in the most recent season with salary data? Give first name, last name and salary.",
+    "gold_sql": "SELECT p.nameFirst, p.nameLast, s.salary FROM Salaries s JOIN People p ON s.playerID = p.playerID JOIN Teams t ON s.teamID = t.teamID AND s.yearID = t.yearID WHERE t.name = 'New York Yankees' AND s.yearID = (SELECT MAX(yearID) FROM Salaries) ORDER BY s.salary DESC LIMIT 1",
+    "join_count": 2,
+    "trap": "time",
+    "split": "dev"
+  },
+  {
+    "id": "q15",
+    "question": "Which Hall of Fame inducted player has the most career home runs? Give first name, last name and home runs.",
+    "gold_sql": "SELECT p.nameFirst, p.nameLast, SUM(b.HR) AS hr FROM HallOfFame h JOIN People p ON h.playerID = p.playerID JOIN Batting b ON b.playerID = p.playerID WHERE h.inducted = 'Y' AND h.category = 'Player' GROUP BY p.playerID ORDER BY hr DESC LIMIT 1",
+    "join_count": 2,
+    "trap": "none",
+    "split": "dev"
+  },
+  {
+    "id": "q16",
+    "question": "List the first and last names of players who attended the University of Southern California and hit at least 100 career home runs, with their career home runs.",
+    "gold_sql": "SELECT p.nameFirst, p.nameLast, SUM(b.HR) AS hr FROM Schools s JOIN CollegePlaying c ON s.schoolID = c.schoolID JOIN People p ON c.playerID = p.playerID JOIN Batting b ON b.playerID = p.playerID WHERE s.name_full = 'University of Southern California' GROUP BY p.playerID HAVING SUM(b.HR) >= 100",
+    "join_count": 3,
+    "trap": "none",
+    "split": "dev"
+  },
+  {
+    "id": "q17",
+    "question": "For the 2001 Seattle Mariners, list each player's first name, last name, home runs for Seattle and salary, for the top 5 salaries.",
+    "gold_sql": "SELECT p.nameFirst, p.nameLast, SUM(b.HR) AS hr, s.salary FROM Salaries s JOIN Teams t ON s.teamID = t.teamID AND s.yearID = t.yearID JOIN People p ON s.playerID = p.playerID JOIN Batting b ON b.playerID = s.playerID AND b.yearID = s.yearID AND b.teamID = s.teamID WHERE t.name = 'Seattle Mariners' AND s.yearID = 2001 GROUP BY s.playerID ORDER BY s.salary DESC LIMIT 5",
+    "join_count": 3,
+    "trap": "stint",
+    "split": "heldout"
+  },
+  {
+    "id": "q18",
+    "question": "How many pitches did Clayton Kershaw throw in his last start?",
+    "gold_sql": null,
+    "join_count": null,
+    "trap": "unanswerable",
+    "split": "dev"
+  },
+  {
+    "id": "q19",
+    "question": "What was Aaron Judge's batting average with runners in scoring position in 2025?",
+    "gold_sql": null,
+    "join_count": null,
+    "trap": "unanswerable",
+    "split": "dev"
+  },
+  {
+    "id": "q20",
+    "question": "How many home runs has Shohei Ohtani hit so far in the 2026 season?",
+    "gold_sql": null,
+    "join_count": null,
+    "trap": "unanswerable",
+    "split": "heldout"
+  },
+  {
+    "id": "q21",
+    "question": "Who stole the most bases in 2011? Give first name, last name and stolen bases.",
+    "gold_sql": "SELECT p.nameFirst, p.nameLast, SUM(b.SB) AS sb FROM Batting b JOIN People p ON b.playerID = p.playerID WHERE b.yearID = 2011 GROUP BY b.playerID ORDER BY sb DESC LIMIT 1",
+    "join_count": 1,
+    "trap": "stint",
+    "split": "heldout_new"
+  },
+  {
+    "id": "q22",
+    "question": "How many walks did Adam Dunn draw in 2008?",
+    "gold_sql": "SELECT SUM(b.BB) FROM Batting b JOIN People p ON b.playerID = p.playerID WHERE p.nameFirst = 'Adam' AND p.nameLast = 'Dunn' AND b.yearID = 2008",
+    "join_count": 1,
+    "trap": "stint",
+    "split": "heldout_new"
+  },
+  {
+    "id": "q23",
+    "question": "How many total wins does the Atlanta Braves franchise have all-time?",
+    "gold_sql": "SELECT SUM(t.W) FROM Teams t JOIN TeamsFranchises f ON t.franchID = f.franchID WHERE f.franchName = 'Atlanta Braves'",
+    "join_count": 1,
+    "trap": "franchise",
+    "split": "heldout_new"
+  },
+  {
+    "id": "q24",
+    "question": "How many league pennants has the Los Angeles Dodgers franchise won in total?",
+    "gold_sql": "SELECT COUNT(*) FROM Teams t JOIN TeamsFranchises f ON t.franchID = f.franchID WHERE f.franchName = 'Los Angeles Dodgers' AND t.LgWin = 'Y'",
+    "join_count": 1,
+    "trap": "franchise",
+    "split": "heldout_new"
+  },
+  {
+    "id": "q25",
+    "question": "How many wins did the 1927 New York Yankees have?",
+    "gold_sql": "SELECT W FROM Teams WHERE yearID = 1927 AND name = 'New York Yankees'",
+    "join_count": 0,
+    "trap": "none",
+    "split": "heldout_new"
+  }
 ]

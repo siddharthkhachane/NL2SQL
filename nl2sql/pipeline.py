@@ -3,6 +3,7 @@ from functools import lru_cache
 
 from nl2sql import db
 from nl2sql.generate import generate_sql, generate_structured, retry_feedback
+from nl2sql.semantic import with_glossary
 
 
 @lru_cache(maxsize=1)
@@ -23,12 +24,13 @@ def _is_refusal_error(error: str | None) -> bool:
 
 
 def ask(question: str, linking: bool = False, retry: bool = False, assumptions: bool = False,
-        gate: bool = False) -> dict:
+        gate: bool = False, semantic: bool = False) -> dict:
     """Returns {sql, columns, rows, error, timings, tables, assumptions, refused, retried, first}.
 
     retry: on an execution error or empty result, regenerate once with the problem as feedback.
     assumptions: the model also returns one sentence on how it resolved ambiguity.
     gate: the model may refuse questions the schema cannot answer (sql=None, refused=True).
+    semantic: prepend a glossary of how the data is modeled (stints, franchises) to the schema.
     """
     result = {"sql": None, "columns": [], "rows": [], "error": None, "timings": {}, "tables": None,
               "assumptions": None, "refused": False, "retried": False, "first": None}
@@ -43,6 +45,8 @@ def ask(question: str, linking: bool = False, retry: bool = False, assumptions: 
     else:
         schema_text = _schema_text()
     result["timings"]["link" if linking else "schema"] = time.perf_counter() - t
+    if semantic:
+        schema_text = with_glossary(schema_text)
 
     structured = assumptions or gate
 

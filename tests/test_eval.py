@@ -9,15 +9,15 @@ QUESTIONS = ev.load_questions()
 
 
 def test_question_set_shape():
-    assert len(QUESTIONS) == 20
+    assert len(QUESTIONS) == 25
     assert all(set(q) >= {"id", "question", "gold_sql", "join_count", "trap", "split"} for q in QUESTIONS)
-    assert len({q["id"] for q in QUESTIONS}) == 20
+    assert len({q["id"] for q in QUESTIONS}) == 25
     assert sum(q["gold_sql"] is None for q in QUESTIONS) == 3
     assert {q["trap"] for q in QUESTIONS} >= {
         "stint", "franchise", "inconsistent_columns", "duplicate_names", "time", "unanswerable", "wide_table"}
     assert {ev.bucket(q["join_count"]) for q in QUESTIONS if q["gold_sql"]} == {"0", "1", "2", "3+"}
-    heldout = sum(q["split"] == "heldout" for q in QUESTIONS)
-    assert 5 <= heldout <= 8
+    assert sum(q["split"] == "heldout" for q in QUESTIONS) == 7
+    assert sum(q["split"] == "heldout_new" for q in QUESTIONS) == 5
 
 
 @pytest.mark.skipif(not db.DB_PATH.exists(), reason="data/lahman.sqlite not present")
@@ -66,10 +66,10 @@ def test_run_summarizes_and_saves(tmp_path, monkeypatch):
         return {"sql": sql, "rows": db.execute_safe(sql, limit=100000)[1], "error": None, "timings": {}}
 
     res = ev.run(oracle, label="oracle")
-    assert res["summary"]["overall"] == {"n": 20, "exec_acc": 1.0, "exact_match": 0.85}
+    assert res["summary"]["overall"] == {"n": 25, "exec_acc": 1.0, "exact_match": 0.88}
     assert set(res["summary"]["by_join_bucket"]) == {"0", "1", "2", "3+", "n/a"}
     saved = json.loads(next(tmp_path.glob("*.json")).read_text())
-    assert saved["label"] == "oracle" and len(saved["records"]) == 20
+    assert saved["label"] == "oracle" and len(saved["records"]) == 25
 
 
 def test_generation_failure_is_not_tagged_as_syntax():
