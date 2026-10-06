@@ -11,7 +11,7 @@
 - Model-generated SQL runs only through the safe executor in `nl2sql/db.py`.
 - Exactly one statement, and it must be SELECT.
 - SQLite is opened read-only (`file:...?mode=ro`), with a row limit (default 100) and a query timeout.
-- API key comes only from `.env`; model name from `NL2SQL_MODEL` (default `claude-sonnet-5-5`).
+- API key comes only from `.env`; model name from `NL2SQL_MODEL` (default `gpt-4o`).
 - Never commit `.env`, API keys, or `data/*.sqlite`.
 - Do not write gold SQL without showing its row count and a sample result.
 - Log surprises in `NOTES.md`.
