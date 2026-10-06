@@ -10,7 +10,7 @@ load_dotenv()
 
 DEFAULT_MODEL = "gpt-4o"
 
-PROMPT = """You write SQLite queries over the Lahman baseball database.
+PROMPT = """You write SQLite queries for the database below.
 
 Schema (each column shows its type and a few sample values):
 {schema}

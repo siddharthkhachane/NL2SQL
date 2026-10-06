@@ -10,16 +10,20 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from nl2sql import db  # noqa: E402
+from nl2sql import databases, db  # noqa: E402
 
 QUESTIONS = ROOT / "eval" / "questions.json"
 RESULTS_DIR = ROOT / "eval" / "results"
 TAGS = ["stint", "franchise", "schema_linking", "join", "filter", "aggregation", "date", "syntax", "other"]
 
 
-def load_questions(split=None):
+def qdb(q):
+    return q.get("database", databases.DEFAULT)
+
+
+def load_questions(split=None, database=None):
     qs = json.loads(QUESTIONS.read_text(encoding="utf-8"))
-    return [q for q in qs if split in (None, "all", q["split"])]
+    return [q for q in qs if split in (None, "all", q["split"]) and database in (None, "all", qdb(q))]
 
 
 def bucket(join_count):
@@ -86,9 +90,13 @@ def tag_failure(q, out):
 def score(q, out):
     """Returns a result record for one question."""
     rec = {"id": q["id"], "question": q["question"], "trap": q["trap"], "split": q["split"],
-           "join_bucket": bucket(q["join_count"]), "pred_sql": out.get("sql"), "error": out.get("error"),
+           "database": qdb(q), "join_bucket": bucket(q["join_count"]),
+           "pred_sql": out.get("sql"), "error": out.get("error"),
            "timings": out.get("timings", {}), "assumptions": out.get("assumptions"),
            "retried": out.get("retried", False), "exec_match": False, "exact_match": False, "failure": None}
+    if out.get("route_scores"):
+        rec["routed_to"] = out["database"]
+        rec["route_correct"] = out["database"] == qdb(q)
     if q["gold_sql"] is not None and out.get("tables") is not None:
         gold = tables_in(q["gold_sql"])
         rec["retrieval_recall_topk"] = gold <= {t.lower() for t in out["retrieved"]}
@@ -100,8 +108,12 @@ def score(q, out):
         if not rec["refused"]:
             rec["failure"] = "other"
         return rec
-    _, gold_rows = db.execute_safe(q["gold_sql"], limit=100000)
+    _, gold_rows = db.execute_safe(q["gold_sql"], limit=100000, path=databases.path(qdb(q)))
     rec["exact_match"] = norm_sql(out.get("sql")) == norm_sql(q["gold_sql"])
+    if rec.get("route_correct") is False:
+        rec["failure"] = "other"  # routed to the wrong database; the SQL cannot be right
+        rec["first_attempt_match"] = False
+        return rec
     if not out.get("error") and not out.get("refused"):
         rec["exec_match"] = results_match(out["rows"], gold_rows, q["gold_sql"])
     first = out.get("first") or {"error": out.get("error"), "rows": out.get("rows"), "refused": out.get("refused")}
@@ -151,16 +163,21 @@ def summarize(records):
     for r in records:
         by_bucket[r["join_bucket"]].append(r)
     recall = {"overall": _recall(records), **{k: _recall(v) for k, v in sorted(by_bucket.items())}}
-    return {"overall": _acc(records), "answerable_only": robustness, "retrieval_recall": recall if recall["overall"] else None,
-            "by_join_bucket": group("join_bucket"), "by_trap": group("trap"),
+    routed = [r for r in records if "route_correct" in r]
+    return {"overall": _acc(records), "answerable_only": robustness,
+            "retrieval_recall": recall if recall["overall"] else None,
+            "route_accuracy": {"n": len(routed), "acc": round(sum(r["route_correct"] for r in routed) / len(routed), 3)}
+            if routed else None,
+            "by_database": group("database"), "by_join_bucket": group("join_bucket"), "by_trap": group("trap"),
             "by_split": group("split"), "failure_tags": dict(fails)}
 
 
-def run(ask_fn, split=None, label=None, save=True):
+def run(ask_fn, split=None, label=None, save=True, database=None):
+    """ask_fn receives the question dict (so it can read the gold database when not routing)."""
     records = []
-    for q in load_questions(split):
+    for q in load_questions(split, database):
         t = time.perf_counter()
-        out = ask_fn(q["question"])
+        out = ask_fn(q)
         rec = score(q, out)
         rec["latency"] = round(time.perf_counter() - t, 3)
         records.append(rec)
@@ -177,12 +194,14 @@ def run(ask_fn, split=None, label=None, save=True):
 def print_report(result):
     s = result["summary"]
     print(f"overall: {s['overall']}")
-    for key in ("by_join_bucket", "by_trap", "by_split"):
+    for key in ("by_database", "by_join_bucket", "by_trap", "by_split"):
         print(key)
         for k, v in s[key].items():
             print(f"  {k:22} n={v['n']:<3} exec={v['exec_acc']}  exact={v['exact_match']}")
     print("answerable only:", s["answerable_only"])
     print("failure tags:", s["failure_tags"])
+    if s.get("route_accuracy"):
+        print("routing accuracy:", s["route_accuracy"])
     if s["retrieval_recall"]:
         print("retrieval recall (topk / with neighbors):")
         for k, v in s["retrieval_recall"].items():
@@ -205,7 +224,7 @@ def compare(a, b):
 def show_gold():
     for q in load_questions():
         if q["gold_sql"]:
-            cols, rows = db.execute_safe(q["gold_sql"], limit=100000)
+            cols, rows = db.execute_safe(q["gold_sql"], limit=100000, path=databases.path(qdb(q)))
             print(f"{q['id']} rows={len(rows)} cols={cols} sample={rows[:3]}")
 
 
@@ -218,6 +237,8 @@ if __name__ == "__main__":
     ap.add_argument("--assumptions", action="store_true", help="model states how it resolved ambiguity")
     ap.add_argument("--gate", action="store_true", help="model may refuse unanswerable questions")
     ap.add_argument("--semantic", action="store_true", help="add the data glossary to the prompt")
+    ap.add_argument("--db", default="all", choices=["all"] + list(databases.DATABASES), help="only questions for this database")
+    ap.add_argument("--route", action="store_true", help="router picks the database instead of the gold label")
     ap.add_argument("--compare", nargs=2, metavar=("A", "B"), help="compare two saved result files")
     ap.add_argument("--gold", action="store_true", help="print row count and sample for each gold query")
     args = ap.parse_args()
@@ -229,5 +250,9 @@ if __name__ == "__main__":
         from nl2sql.pipeline import ask
         flags = {"linking": args.linking, "retry": args.retry, "assumptions": args.assumptions, "gate": args.gate,
                  "semantic": args.semantic}
+        flags["route"] = args.route
         label = args.label if args.label != "baseline" else "+".join(k for k, v in flags.items() if v) or "baseline"
-        print_report(run(lambda q: ask(q, **flags), args.split, label))
+        if args.db != "all":
+            label += f"@{args.db}"
+        print_report(run(lambda q: ask(q["question"], database=None if args.route else qdb(q), **flags),
+                         args.split, label, database=args.db))

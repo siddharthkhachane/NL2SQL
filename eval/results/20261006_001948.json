@@ -1,0 +1,1235 @@
+{
+  "label": "multidb_route",
+  "timestamp": "2026-10-06T00:19:48",
+  "summary": {
+    "overall": {
+      "n": 43,
+      "exec_acc": 0.93,
+      "exact_match": 0.163
+    },
+    "answerable_only": {
+      "retry_rate": 0.0,
+      "first_attempt_acc": 0.921,
+      "final_acc": 0.921,
+      "unanswerable_refused": "5/5",
+      "false_refusals": 2
+    },
+    "retrieval_recall": null,
+    "route_accuracy": {
+      "n": 43,
+      "acc": 0.977
+    },
+    "by_database": {
+      "lahman": {
+        "n": 25,
+        "exec_acc": 0.92,
+        "exact_match": 0.04
+      },
+      "northwind": {
+        "n": 9,
+        "exec_acc": 1.0,
+        "exact_match": 0.444
+      },
+      "sakila": {
+        "n": 9,
+        "exec_acc": 0.889,
+        "exact_match": 0.222
+      }
+    },
+    "by_join_bucket": {
+      "0": {
+        "n": 10,
+        "exec_acc": 0.8,
+        "exact_match": 0.4
+      },
+      "1": {
+        "n": 19,
+        "exec_acc": 1.0,
+        "exact_match": 0.158
+      },
+      "2": {
+        "n": 4,
+        "exec_acc": 0.75,
+        "exact_match": 0.0
+      },
+      "3+": {
+        "n": 5,
+        "exec_acc": 1.0,
+        "exact_match": 0.0
+      },
+      "n/a": {
+        "n": 5,
+        "exec_acc": 1.0,
+        "exact_match": 0.0
+      }
+    },
+    "by_trap": {
+      "ambiguous_column": {
+        "n": 1,
+        "exec_acc": 1.0,
+        "exact_match": 1.0
+      },
+      "computed_metric": {
+        "n": 2,
+        "exec_acc": 1.0,
+        "exact_match": 0.0
+      },
+      "date_format": {
+        "n": 1,
+        "exec_acc": 0.0,
+        "exact_match": 0.0
+      },
+      "duplicate_names": {
+        "n": 2,
+        "exec_acc": 1.0,
+        "exact_match": 0.0
+      },
+      "flag_type": {
+        "n": 1,
+        "exec_acc": 1.0,
+        "exact_match": 1.0
+      },
+      "franchise": {
+        "n": 5,
+        "exec_acc": 0.8,
+        "exact_match": 0.0
+      },
+      "inconsistent_columns": {
+        "n": 1,
+        "exec_acc": 1.0,
+        "exact_match": 0.0
+      },
+      "join_key": {
+        "n": 1,
+        "exec_acc": 1.0,
+        "exact_match": 0.0
+      },
+      "none": {
+        "n": 12,
+        "exec_acc": 1.0,
+        "exact_match": 0.333
+      },
+      "stint": {
+        "n": 6,
+        "exec_acc": 1.0,
+        "exact_match": 0.0
+      },
+      "time": {
+        "n": 3,
+        "exec_acc": 0.667,
+        "exact_match": 0.0
+      },
+      "unanswerable": {
+        "n": 5,
+        "exec_acc": 1.0,
+        "exact_match": 0.0
+      },
+      "value_case": {
+        "n": 1,
+        "exec_acc": 1.0,
+        "exact_match": 0.0
+      },
+      "value_format": {
+        "n": 1,
+        "exec_acc": 1.0,
+        "exact_match": 1.0
+      },
+      "wide_table": {
+        "n": 1,
+        "exec_acc": 1.0,
+        "exact_match": 0.0
+      }
+    },
+    "by_split": {
+      "dev": {
+        "n": 25,
+        "exec_acc": 0.92,
+        "exact_match": 0.16
+      },
+      "heldout": {
+        "n": 13,
+        "exec_acc": 0.923,
+        "exact_match": 0.154
+      },
+      "heldout_new": {
+        "n": 5,
+        "exec_acc": 1.0,
+        "exact_match": 0.2
+      }
+    },
+    "failure_tags": {
+      "other": 2,
+      "schema_linking": 1
+    }
+  },
+  "records": [
+    {
+      "id": "q01",
+      "question": "Which team won the most games in 2001? Give the team name and wins.",
+      "trap": "wide_table",
+      "split": "dev",
+      "database": "lahman",
+      "join_bucket": "0",
+      "pred_sql": "SELECT T.name, T.W FROM Teams T WHERE T.yearID = 2001 ORDER BY T.W DESC LIMIT 1;",
+      "error": null,
+      "timings": {
+        "route": 15.947441600001184,
+        "schema": 0.0008409000001847744,
+        "generate": 1.5794807999918703,
+        "execute": 0.002303200017195195
+      },
+      "assumptions": "The question refers to the team with the most wins in the regular season of 2001.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "lahman",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 17.536
+    },
+    {
+      "id": "q02",
+      "question": "How many players were born in Japan?",
+      "trap": "none",
+      "split": "heldout",
+      "database": "lahman",
+      "join_bucket": "0",
+      "pred_sql": "SELECT COUNT(DISTINCT playerID) FROM People WHERE birthCountry = 'Japan';",
+      "error": null,
+      "timings": {
+        "route": 0.014168399997288361,
+        "schema": 2.9999937396496534e-06,
+        "generate": 4.851348199998029,
+        "execute": 0.009932299988577142
+      },
+      "assumptions": "none",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "lahman",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 4.882
+    },
+    {
+      "id": "q03",
+      "question": "What was the highest salary last season?",
+      "trap": "time",
+      "split": "dev",
+      "database": "lahman",
+      "join_bucket": "0",
+      "pred_sql": null,
+      "error": null,
+      "timings": {
+        "route": 0.013166000018827617,
+        "schema": 2.1999876480549574e-06,
+        "generate": 14.492050200002268
+      },
+      "assumptions": "The Salaries table ends in 2016, so it does not contain data for the last season (2025).",
+      "retried": false,
+      "exec_match": false,
+      "exact_match": false,
+      "failure": "other",
+      "routed_to": "lahman",
+      "route_correct": true,
+      "first_attempt_match": false,
+      "latency": 14.51
+    },
+    {
+      "id": "q04",
+      "question": "Which franchise has the most all-time wins? Give the franchise ID and total wins.",
+      "trap": "franchise",
+      "split": "dev",
+      "database": "lahman",
+      "join_bucket": "0",
+      "pred_sql": "SELECT tf.franchID, SUM(t.W) AS total_wins FROM Teams t JOIN TeamsFranchises tf ON t.franchID = tf.franchID GROUP BY tf.franchID ORDER BY total_wins DESC LIMIT 1;",
+      "error": null,
+      "timings": {
+        "route": 0.012798299983842298,
+        "schema": 2.1999876480549574e-06,
+        "generate": 15.302015900000697,
+        "execute": 0.006773600005544722
+      },
+      "assumptions": "The question asks for the franchise with the most all-time wins, so I used the Teams table to sum wins by franchise ID.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "lahman",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 15.324
+    },
+    {
+      "id": "q05",
+      "question": "What was the total home attendance of the Boston Red Sox in 2019?",
+      "trap": "inconsistent_columns",
+      "split": "heldout",
+      "database": "lahman",
+      "join_bucket": "0",
+      "pred_sql": "SELECT SUM(attendance) AS total_attendance FROM HomeGames WHERE yearkey = 2019 AND teamkey = (SELECT teamID FROM Teams WHERE yearID = 2019 AND name = 'Boston Red Sox');",
+      "error": null,
+      "timings": {
+        "route": 0.015028300025733188,
+        "schema": 1.9000144675374031e-06,
+        "generate": 14.203963899984956,
+        "execute": 0.004395500000100583
+      },
+      "assumptions": "The question refers to the Boston Red Sox team specifically in 2019, not the franchise historically.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "lahman",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 14.225
+    },
+    {
+      "id": "q06",
+      "question": "How many home runs did Mark McGwire hit in 1997?",
+      "trap": "stint",
+      "split": "dev",
+      "database": "lahman",
+      "join_bucket": "1",
+      "pred_sql": "SELECT SUM(HR) AS home_runs FROM Batting WHERE playerID = (SELECT playerID FROM People WHERE nameFirst = 'Mark' AND nameLast = 'McGwire') AND yearID = 1997;",
+      "error": null,
+      "timings": {
+        "route": 0.01273890002630651,
+        "schema": 2.5999906938523054e-06,
+        "generate": 14.747008999984246,
+        "execute": 0.024474100006045774
+      },
+      "assumptions": "Assumed 'Mark McGwire' refers to the player with first name 'Mark' and last name 'McGwire' in the People table.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "lahman",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 14.807
+    },
+    {
+      "id": "q07",
+      "question": "Who hit the most home runs in 1997? Give first name, last name and home runs.",
+      "trap": "stint",
+      "split": "heldout",
+      "database": "lahman",
+      "join_bucket": "1",
+      "pred_sql": "SELECT p.nameFirst, p.nameLast, SUM(b.HR) AS home_runs FROM Batting b JOIN People p ON b.playerID = p.playerID WHERE b.yearID = 1997 GROUP BY b.playerID ORDER BY home_runs DESC LIMIT 1;",
+      "error": null,
+      "timings": {
+        "route": 0.013553099997807294,
+        "schema": 4.499976057559252e-06,
+        "generate": 15.350373400026001,
+        "execute": 0.031056700012413785
+      },
+      "assumptions": "The question is asking for the player with the most home runs in the regular season of 1997.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "lahman",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 15.427
+    },
+    {
+      "id": "q08",
+      "question": "For each player named Chris Young, give the playerID and career home runs.",
+      "trap": "duplicate_names",
+      "split": "dev",
+      "database": "lahman",
+      "join_bucket": "1",
+      "pred_sql": "SELECT p.playerID, SUM(b.HR) AS career_home_runs FROM People p JOIN Batting b ON p.playerID = b.playerID WHERE p.nameFirst = 'Chris' AND p.nameLast = 'Young' GROUP BY p.playerID;",
+      "error": null,
+      "timings": {
+        "route": 0.011120000010123476,
+        "schema": 1.7999846022576094e-06,
+        "generate": 13.93312679999508,
+        "execute": 0.08428299997467548
+      },
+      "assumptions": "The query assumes that all players named Chris Young are distinct and identified by their playerID.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "lahman",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 14.111
+    },
+    {
+      "id": "q09",
+      "question": "Which franchise has hit the most home runs all-time? Give the franchise name and total home runs.",
+      "trap": "franchise",
+      "split": "dev",
+      "database": "lahman",
+      "join_bucket": "1",
+      "pred_sql": "SELECT tf.franchName, SUM(b.HR) AS total_home_runs FROM Batting b JOIN Teams t ON b.teamID = t.teamID AND b.yearID = t.yearID JOIN TeamsFranchises tf ON t.franchID = tf.franchID GROUP BY tf.franchID ORDER BY total_home_runs DESC LIMIT 1;",
+      "error": null,
+      "timings": {
+        "route": 0.012909600016428158,
+        "schema": 2.500019036233425e-06,
+        "generate": 14.854311300005065,
+        "execute": 0.18169629998737946
+      },
+      "assumptions": "The question is asking for the franchise with the most home runs, so I used the franchID to group and sum home runs across all years.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "lahman",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 15.053
+    },
+    {
+      "id": "q10",
+      "question": "Who led MLB in home runs last season? Give first name, last name and home runs.",
+      "trap": "time",
+      "split": "heldout",
+      "database": "lahman",
+      "join_bucket": "1",
+      "pred_sql": "SELECT p.nameFirst, p.nameLast, SUM(b.HR) AS home_runs FROM Batting b JOIN People p ON b.playerID = p.playerID WHERE b.yearID = 2025 GROUP BY b.playerID ORDER BY home_runs DESC LIMIT 1;",
+      "error": null,
+      "timings": {
+        "route": 0.013526399998227134,
+        "schema": 2.100015990436077e-06,
+        "generate": 14.023185999976704,
+        "execute": 0.03475230000913143
+      },
+      "assumptions": "The term 'last season' refers to the most recent completed season in the dataset, which is 2025.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "lahman",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 14.114
+    },
+    {
+      "id": "q11",
+      "question": "Which team had the highest total payroll in 2016? Give the team name and payroll.",
+      "trap": "join_key",
+      "split": "dev",
+      "database": "lahman",
+      "join_bucket": "1",
+      "pred_sql": "SELECT t.name, SUM(s.salary) AS total_payroll FROM Salaries s JOIN Teams t ON s.teamID = t.teamID AND s.yearID = t.yearID WHERE s.yearID = 2016 GROUP BY t.teamID ORDER BY total_payroll DESC LIMIT 1;",
+      "error": null,
+      "timings": {
+        "route": 0.013625299994600937,
+        "schema": 4.1000021155923605e-06,
+        "generate": 15.670505699992646,
+        "execute": 0.005629000021144748
+      },
+      "assumptions": "The question refers to the total payroll of a specific team in 2016, not a franchise over multiple years.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "lahman",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 15.694
+    },
+    {
+      "id": "q12",
+      "question": "List the first and last names of players who hit 40 or more home runs in 2001 and were All-Stars that year.",
+      "trap": "stint",
+      "split": "dev",
+      "database": "lahman",
+      "join_bucket": "2",
+      "pred_sql": "SELECT p.nameFirst, p.nameLast FROM Batting b JOIN AllstarFull a ON b.playerID = a.playerID AND b.yearID = a.yearID JOIN People p ON b.playerID = p.playerID WHERE b.yearID = 2001 AND b.HR >= 40 AND a.yearID = 2001;",
+      "error": null,
+      "timings": {
+        "route": 0.012932700017699972,
+        "schema": 2.2999884095042944e-06,
+        "generate": 13.734292000008281,
+        "execute": 0.037051300023449585
+      },
+      "assumptions": "None",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "lahman",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 13.812
+    },
+    {
+      "id": "q13",
+      "question": "How many different players have played for the Los Angeles Dodgers franchise, including its Brooklyn years?",
+      "trap": "franchise",
+      "split": "heldout",
+      "database": "lahman",
+      "join_bucket": "2",
+      "pred_sql": "SELECT COUNT(DISTINCT playerID) FROM Appearances a JOIN Teams t ON a.teamID = t.teamID WHERE t.franchID = 'LAD';",
+      "error": null,
+      "timings": {
+        "route": 0.012461300007998943,
+        "schema": 2.00001522898674e-06,
+        "generate": 14.765775499981828,
+        "execute": 0.24753540000529028
+      },
+      "assumptions": "The Los Angeles Dodgers franchise is identified by the 'LAD' franchID in the Teams table, which includes its history as the Brooklyn Dodgers.",
+      "retried": false,
+      "exec_match": false,
+      "exact_match": false,
+      "failure": "schema_linking",
+      "routed_to": "lahman",
+      "route_correct": true,
+      "first_attempt_match": false,
+      "latency": 15.307
+    },
+    {
+      "id": "q14",
+      "question": "Who was the highest-paid New York Yankees player in the most recent season with salary data? Give first name, last name and salary.",
+      "trap": "time",
+      "split": "dev",
+      "database": "lahman",
+      "join_bucket": "2",
+      "pred_sql": "SELECT p.nameFirst, p.nameLast, s.salary FROM Salaries s JOIN People p ON s.playerID = p.playerID WHERE s.yearID = (SELECT MAX(yearID) FROM Salaries) AND s.teamID = 'NYA' ORDER BY s.salary DESC LIMIT 1;",
+      "error": null,
+      "timings": {
+        "route": 0.014441899984376505,
+        "schema": 2.200016751885414e-06,
+        "generate": 14.48376420000568,
+        "execute": 0.022257000004174188
+      },
+      "assumptions": "The most recent season with salary data is 2016, and 'New York Yankees' corresponds to teamID 'NYA'.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "lahman",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 14.544
+    },
+    {
+      "id": "q15",
+      "question": "Which Hall of Fame inducted player has the most career home runs? Give first name, last name and home runs.",
+      "trap": "none",
+      "split": "dev",
+      "database": "lahman",
+      "join_bucket": "2",
+      "pred_sql": "SELECT p.nameFirst, p.nameLast, SUM(b.HR) AS careerHR FROM HallOfFame h JOIN People p ON h.playerID = p.playerID JOIN Batting b ON h.playerID = b.playerID WHERE h.inducted = 'Y' GROUP BY h.playerID ORDER BY careerHR DESC LIMIT 1;",
+      "error": null,
+      "timings": {
+        "route": 0.013146099983714521,
+        "schema": 3.4999975468963385e-06,
+        "generate": 14.786268199997721,
+        "execute": 0.10159209999255836
+      },
+      "assumptions": "The query assumes that the 'Hall of Fame inducted player' refers to players with 'Y' in the 'inducted' column of the HallOfFame table.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "lahman",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 15.0
+    },
+    {
+      "id": "q16",
+      "question": "List the first and last names of players who attended the University of Southern California and hit at least 100 career home runs, with their career home runs.",
+      "trap": "none",
+      "split": "dev",
+      "database": "lahman",
+      "join_bucket": "3+",
+      "pred_sql": "SELECT p.nameFirst, p.nameLast, SUM(b.HR) AS careerHR FROM People p JOIN CollegePlaying cp ON p.playerID = cp.playerID JOIN Schools s ON cp.schoolID = s.schoolID JOIN Batting b ON p.playerID = b.playerID WHERE s.name_full = 'University of Southern California' GROUP BY p.playerID HAVING SUM(b.HR) >= 100;",
+      "error": null,
+      "timings": {
+        "route": 0.014782700018258765,
+        "schema": 2.00001522898674e-06,
+        "generate": 15.985554999992019,
+        "execute": 0.10800559999188408
+      },
+      "assumptions": "The question assumes that the 'University of Southern California' is correctly represented in the Schools table.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "lahman",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 16.187
+    },
+    {
+      "id": "q17",
+      "question": "For the 2001 Seattle Mariners, list each player's first name, last name, home runs for Seattle and salary, for the top 5 salaries.",
+      "trap": "stint",
+      "split": "heldout",
+      "database": "lahman",
+      "join_bucket": "3+",
+      "pred_sql": "SELECT p.nameFirst, p.nameLast, SUM(b.HR) AS homeRuns, s.salary FROM Batting b JOIN People p ON b.playerID = p.playerID JOIN Salaries s ON b.playerID = s.playerID AND b.yearID = s.yearID WHERE b.yearID = 2001 AND b.teamID = 'SEA' AND s.teamID = 'SEA' GROUP BY b.playerID ORDER BY s.salary DESC LIMIT 5;",
+      "error": null,
+      "timings": {
+        "route": 0.014688399998703972,
+        "schema": 2.3999891709536314e-06,
+        "generate": 13.093897800019477,
+        "execute": 0.033333999977912754
+      },
+      "assumptions": "Assumed 'Seattle Mariners' refers to teamID 'SEA' and used the year 2001 for both Batting and Salaries tables.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "lahman",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 13.17
+    },
+    {
+      "id": "q18",
+      "question": "How many pitches did Clayton Kershaw throw in his last start?",
+      "trap": "unanswerable",
+      "split": "dev",
+      "database": "lahman",
+      "join_bucket": "n/a",
+      "pred_sql": null,
+      "error": null,
+      "timings": {
+        "route": 0.010142400016775355,
+        "schema": 1.9000144675374031e-06,
+        "generate": 15.128077700006543
+      },
+      "assumptions": "The database does not contain pitch-level data or specific game logs to determine the number of pitches thrown by Clayton Kershaw in his last start.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "lahman",
+      "route_correct": true,
+      "refused": true,
+      "latency": 15.138
+    },
+    {
+      "id": "q19",
+      "question": "What was Aaron Judge's batting average with runners in scoring position in 2025?",
+      "trap": "unanswerable",
+      "split": "dev",
+      "database": "lahman",
+      "join_bucket": "n/a",
+      "pred_sql": null,
+      "error": null,
+      "timings": {
+        "route": 0.014241500000935048,
+        "schema": 4.099973011761904e-06,
+        "generate": 12.566568000009283
+      },
+      "assumptions": "The database does not contain specific situational statistics such as batting average with runners in scoring position.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "lahman",
+      "route_correct": true,
+      "refused": true,
+      "latency": 12.581
+    },
+    {
+      "id": "q20",
+      "question": "How many home runs has Shohei Ohtani hit so far in the 2026 season?",
+      "trap": "unanswerable",
+      "split": "heldout",
+      "database": "lahman",
+      "join_bucket": "n/a",
+      "pred_sql": null,
+      "error": null,
+      "timings": {
+        "route": 0.010301300004357472,
+        "schema": 1.700012944638729e-06,
+        "generate": 14.465605999983381
+      },
+      "assumptions": "The database does not contain data for the 2026 season.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "lahman",
+      "route_correct": true,
+      "refused": true,
+      "latency": 14.476
+    },
+    {
+      "id": "q21",
+      "question": "Who stole the most bases in 2011? Give first name, last name and stolen bases.",
+      "trap": "stint",
+      "split": "heldout_new",
+      "database": "lahman",
+      "join_bucket": "1",
+      "pred_sql": "SELECT p.nameFirst, p.nameLast, SUM(b.SB) AS stolen_bases FROM Batting b JOIN People p ON b.playerID = p.playerID WHERE b.yearID = 2011 GROUP BY b.playerID ORDER BY stolen_bases DESC LIMIT 1;",
+      "error": null,
+      "timings": {
+        "route": 0.010597599990433082,
+        "schema": 1.9000144675374031e-06,
+        "generate": 14.839780999987852,
+        "execute": 0.024931300024036318
+      },
+      "assumptions": "none",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "lahman",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 14.901
+    },
+    {
+      "id": "q22",
+      "question": "How many walks did Adam Dunn draw in 2008?",
+      "trap": "stint",
+      "split": "heldout_new",
+      "database": "lahman",
+      "join_bucket": "1",
+      "pred_sql": "SELECT SUM(BB) AS walks FROM Batting WHERE playerID = 'dunnad01' AND yearID = 2008;",
+      "error": null,
+      "timings": {
+        "route": 0.011934499983908609,
+        "schema": 1.9999861251562834e-06,
+        "generate": 15.10626400000183,
+        "execute": 0.011396700021577999
+      },
+      "assumptions": "Assumed 'Adam Dunn' corresponds to playerID 'dunnad01' based on typical playerID naming conventions.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "lahman",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 15.143
+    },
+    {
+      "id": "q23",
+      "question": "How many total wins does the Atlanta Braves franchise have all-time?",
+      "trap": "franchise",
+      "split": "heldout_new",
+      "database": "lahman",
+      "join_bucket": "1",
+      "pred_sql": "SELECT SUM(W) AS total_wins FROM Teams WHERE franchID = (SELECT franchID FROM TeamsFranchises WHERE franchName = 'Atlanta Braves');",
+      "error": null,
+      "timings": {
+        "route": 0.00965870000072755,
+        "schema": 1.9999861251562834e-06,
+        "generate": 14.278813799988711,
+        "execute": 0.0055041000014171
+      },
+      "assumptions": "Assumed 'Atlanta Braves' refers to the franchise with the current name 'Atlanta Braves' in the TeamsFranchises table.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "lahman",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 14.297
+    },
+    {
+      "id": "q24",
+      "question": "How many league pennants has the Los Angeles Dodgers franchise won in total?",
+      "trap": "franchise",
+      "split": "heldout_new",
+      "database": "lahman",
+      "join_bucket": "1",
+      "pred_sql": "SELECT COUNT(*) AS pennants_won FROM Teams WHERE franchID = 'LAD' AND LgWin = 'Y';",
+      "error": null,
+      "timings": {
+        "route": 0.011615200026426464,
+        "schema": 3.6999990697950125e-06,
+        "generate": 14.518881399999373,
+        "execute": 0.0022792999807279557
+      },
+      "assumptions": "The Los Angeles Dodgers franchise is identified by the franchID 'LAD'.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "lahman",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 14.534
+    },
+    {
+      "id": "q25",
+      "question": "How many wins did the 1927 New York Yankees have?",
+      "trap": "none",
+      "split": "heldout_new",
+      "database": "lahman",
+      "join_bucket": "0",
+      "pred_sql": "SELECT W FROM Teams WHERE yearID = 1927 AND name = 'New York Yankees';",
+      "error": null,
+      "timings": {
+        "route": 0.00887790002161637,
+        "schema": 2.100015990436077e-06,
+        "generate": 14.572516600019298,
+        "execute": 0.0021767999860458076
+      },
+      "assumptions": "The question refers to the team name 'New York Yankees' in the year 1927.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": true,
+      "failure": null,
+      "routed_to": "lahman",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 14.585
+    },
+    {
+      "id": "s01",
+      "question": "How many films are rated PG-13?",
+      "trap": "none",
+      "split": "dev",
+      "database": "sakila",
+      "join_bucket": "0",
+      "pred_sql": "SELECT COUNT(*) FROM film WHERE rating = 'PG-13';",
+      "error": null,
+      "timings": {
+        "route": 0.008709399990038946,
+        "schema": 0.0002384000108577311,
+        "generate": 15.866308500000741,
+        "execute": 0.003439300024183467
+      },
+      "assumptions": "none",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": true,
+      "failure": null,
+      "routed_to": "sakila",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 15.88
+    },
+    {
+      "id": "s02",
+      "question": "How many films are in the Horror category?",
+      "trap": "none",
+      "split": "dev",
+      "database": "sakila",
+      "join_bucket": "1",
+      "pred_sql": "SELECT COUNT(*) FROM film_category fc JOIN category c ON fc.category_id = c.category_id WHERE c.name = 'Horror';",
+      "error": null,
+      "timings": {
+        "route": 0.010815200017532334,
+        "schema": 2.100015990436077e-06,
+        "generate": 6.171832899999572,
+        "execute": 0.00529980001738295
+      },
+      "assumptions": "The question assumes that the category name 'Horror' exists in the category table.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": true,
+      "failure": null,
+      "routed_to": "sakila",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 6.189
+    },
+    {
+      "id": "s03",
+      "question": "How many films has Penelope Guiness appeared in?",
+      "trap": "value_case",
+      "split": "heldout",
+      "database": "sakila",
+      "join_bucket": "1",
+      "pred_sql": "SELECT COUNT(DISTINCT fa.film_id) FROM actor a JOIN film_actor fa ON a.actor_id = fa.actor_id WHERE a.first_name = 'PENELOPE' AND a.last_name = 'GUINESS';",
+      "error": null,
+      "timings": {
+        "route": 0.011705099983373657,
+        "schema": 1.8999853637069464e-06,
+        "generate": 4.427607899997383,
+        "execute": 0.0027396000223234296
+      },
+      "assumptions": "Assumed the full name 'Penelope Guiness' is correctly spelled and exists in the actor table.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "sakila",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 4.444
+    },
+    {
+      "id": "s04",
+      "question": "For each actor named Susan Davis, give the actor ID and the number of films they appeared in.",
+      "trap": "duplicate_names",
+      "split": "dev",
+      "database": "sakila",
+      "join_bucket": "1",
+      "pred_sql": "SELECT a.actor_id, COUNT(fa.film_id) AS film_count FROM actor a JOIN film_actor fa ON a.actor_id = fa.actor_id WHERE a.first_name = 'SUSAN' AND a.last_name = 'DAVIS' GROUP BY a.actor_id;",
+      "error": null,
+      "timings": {
+        "route": 0.010381900006905198,
+        "schema": 1.800013706088066e-06,
+        "generate": 2.5429324000142515,
+        "execute": 0.0030291000148281455
+      },
+      "assumptions": "The query assumes that the actor's name is exactly 'Susan Davis' with first name 'SUSAN' and last name 'DAVIS'.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "sakila",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 2.558
+    },
+    {
+      "id": "s05",
+      "question": "What was the total payment revenue in June 2005?",
+      "trap": "date_format",
+      "split": "dev",
+      "database": "sakila",
+      "join_bucket": "0",
+      "pred_sql": null,
+      "error": null,
+      "timings": {
+        "route": 0.010493399982806295,
+        "schema": 3.2999960239976645e-06,
+        "generate": 5.548852399981115
+      },
+      "assumptions": "The database does not contain any table or column related to payment revenue or any financial transactions other than player salaries.",
+      "retried": false,
+      "exec_match": false,
+      "exact_match": false,
+      "failure": "other",
+      "routed_to": "lahman",
+      "route_correct": false,
+      "first_attempt_match": false,
+      "latency": 5.573
+    },
+    {
+      "id": "s06",
+      "question": "Which customer has paid the most in total? Give first name, last name and the total.",
+      "trap": "none",
+      "split": "dev",
+      "database": "sakila",
+      "join_bucket": "1",
+      "pred_sql": "SELECT c.first_name, c.last_name, SUM(p.amount) AS total_paid FROM customer c JOIN payment p ON c.customer_id = p.customer_id GROUP BY c.customer_id ORDER BY total_paid DESC LIMIT 1;",
+      "error": null,
+      "timings": {
+        "route": 0.010812900000018999,
+        "schema": 3.6999990697950125e-06,
+        "generate": 9.252915399993071,
+        "execute": 0.01210910000372678
+      },
+      "assumptions": "none",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "sakila",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 9.284
+    },
+    {
+      "id": "s07",
+      "question": "How many rental customers live in Canada?",
+      "trap": "none",
+      "split": "heldout",
+      "database": "sakila",
+      "join_bucket": "3+",
+      "pred_sql": "SELECT COUNT(DISTINCT c.customer_id) AS rental_customers_in_canada FROM customer c JOIN address a ON c.address_id = a.address_id JOIN city ci ON a.city_id = ci.city_id JOIN country co ON ci.country_id = co.country_id WHERE co.country = 'Canada';",
+      "error": null,
+      "timings": {
+        "route": 0.010787200008053333,
+        "schema": 1.7999846022576094e-06,
+        "generate": 5.310132999991765,
+        "execute": 0.0027357999933883548
+      },
+      "assumptions": "Assumed that 'rental customers' refers to customers who have an address in Canada.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "sakila",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 5.325
+    },
+    {
+      "id": "s08",
+      "question": "Which film category has been rented the most? Give the category name and the number of rentals.",
+      "trap": "none",
+      "split": "dev",
+      "database": "sakila",
+      "join_bucket": "3+",
+      "pred_sql": "SELECT c.name AS category_name, COUNT(r.rental_id) AS rental_count FROM rental r JOIN inventory i ON r.inventory_id = i.inventory_id JOIN film_category fc ON i.film_id = fc.film_id JOIN category c ON fc.category_id = c.category_id GROUP BY c.name ORDER BY rental_count DESC LIMIT 1;",
+      "error": null,
+      "timings": {
+        "route": 0.007561199978226796,
+        "schema": 2.400018274784088e-06,
+        "generate": 5.627911999996286,
+        "execute": 0.053843900008359924
+      },
+      "assumptions": "The most rented category is determined by counting the number of rentals associated with films in each category.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "sakila",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 5.699
+    },
+    {
+      "id": "s09",
+      "question": "What is the average customer review score for films?",
+      "trap": "unanswerable",
+      "split": "heldout",
+      "database": "sakila",
+      "join_bucket": "n/a",
+      "pred_sql": null,
+      "error": null,
+      "timings": {
+        "route": 0.009893100010231137,
+        "schema": 1.9000144675374031e-06,
+        "generate": 4.206203899986576
+      },
+      "assumptions": "The database does not contain any tables or columns related to customer reviews or review scores for films.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "sakila",
+      "route_correct": true,
+      "refused": true,
+      "latency": 4.216
+    },
+    {
+      "id": "n01",
+      "question": "How many products are discontinued?",
+      "trap": "flag_type",
+      "split": "dev",
+      "database": "northwind",
+      "join_bucket": "0",
+      "pred_sql": "SELECT COUNT(*) FROM Products WHERE Discontinued = '1';",
+      "error": null,
+      "timings": {
+        "route": 0.008303499984322116,
+        "schema": 0.00016709999181330204,
+        "generate": 5.111339499999303,
+        "execute": 0.005926300014834851
+      },
+      "assumptions": "none",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": true,
+      "failure": null,
+      "routed_to": "northwind",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 5.127
+    },
+    {
+      "id": "n02",
+      "question": "How many orders were shipped to the United Kingdom?",
+      "trap": "value_format",
+      "split": "heldout",
+      "database": "northwind",
+      "join_bucket": "0",
+      "pred_sql": "SELECT COUNT(*) FROM Orders WHERE ShipCountry = 'UK';",
+      "error": null,
+      "timings": {
+        "route": 0.008727100008400157,
+        "schema": 1.8999853637069464e-06,
+        "generate": 4.449108400003752,
+        "execute": 0.01897209999151528
+      },
+      "assumptions": "Assumed 'United Kingdom' is represented as 'UK' in the ShipCountry column.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": true,
+      "failure": null,
+      "routed_to": "northwind",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 4.481
+    },
+    {
+      "id": "n03",
+      "question": "What is the most expensive product and which category is it in? Give the product name and category name.",
+      "trap": "none",
+      "split": "dev",
+      "database": "northwind",
+      "join_bucket": "1",
+      "pred_sql": "SELECT p.ProductName, c.CategoryName FROM Products p JOIN Categories c ON p.CategoryID = c.CategoryID ORDER BY p.UnitPrice DESC LIMIT 1;",
+      "error": null,
+      "timings": {
+        "route": 0.00944519997574389,
+        "schema": 3.0999945010989904e-06,
+        "generate": 4.926579999999376,
+        "execute": 0.0015287999995052814
+      },
+      "assumptions": "none",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": true,
+      "failure": null,
+      "routed_to": "northwind",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 4.939
+    },
+    {
+      "id": "n04",
+      "question": "How many units are in stock across all products supplied by Pavlova, Ltd.?",
+      "trap": "none",
+      "split": "dev",
+      "database": "northwind",
+      "join_bucket": "1",
+      "pred_sql": "SELECT SUM(p.UnitsInStock) AS TotalUnitsInStock FROM Products p JOIN Suppliers s ON p.SupplierID = s.SupplierID WHERE s.CompanyName = 'Pavlova, Ltd.';",
+      "error": null,
+      "timings": {
+        "route": 0.011960600008023903,
+        "schema": 3.5999983083456755e-06,
+        "generate": 5.03623189998325,
+        "execute": 0.0056007999810390174
+      },
+      "assumptions": "Assumed that 'Pavlova, Ltd.' is a supplier listed in the Suppliers table.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "northwind",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 5.055
+    },
+    {
+      "id": "n05",
+      "question": "Which employee has handled the most orders? Give first name, last name and the number of orders.",
+      "trap": "none",
+      "split": "dev",
+      "database": "northwind",
+      "join_bucket": "1",
+      "pred_sql": "SELECT e.FirstName, e.LastName, COUNT(o.OrderID) AS NumberOfOrders FROM Employees e JOIN Orders o ON e.EmployeeID = o.EmployeeID GROUP BY e.EmployeeID ORDER BY NumberOfOrders DESC LIMIT 1;",
+      "error": null,
+      "timings": {
+        "route": 0.00941699999384582,
+        "schema": 1.8999853637069464e-06,
+        "generate": 4.134202899993397,
+        "execute": 0.012094800011254847
+      },
+      "assumptions": "none",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "northwind",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 4.162
+    },
+    {
+      "id": "n06",
+      "question": "How many orders did customers from Germany place?",
+      "trap": "ambiguous_column",
+      "split": "heldout",
+      "database": "northwind",
+      "join_bucket": "1",
+      "pred_sql": "SELECT COUNT(*) FROM Orders o JOIN Customers c ON o.CustomerID = c.CustomerID WHERE c.Country = 'Germany';",
+      "error": null,
+      "timings": {
+        "route": 0.008131599985063076,
+        "schema": 1.6999838408082724e-06,
+        "generate": 5.280103400000371,
+        "execute": 0.0065744000021368265
+      },
+      "assumptions": "none",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": true,
+      "failure": null,
+      "routed_to": "northwind",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 5.302
+    },
+    {
+      "id": "n07",
+      "question": "What was the total revenue in 2016, after discounts?",
+      "trap": "computed_metric",
+      "split": "dev",
+      "database": "northwind",
+      "join_bucket": "1",
+      "pred_sql": "SELECT SUM(od.UnitPrice * od.Quantity * (1 - od.Discount)) AS TotalRevenue FROM Orders o JOIN \"Order Details\" od ON o.OrderID = od.OrderID WHERE strftime('%Y', o.OrderDate) = '2016';",
+      "error": null,
+      "timings": {
+        "route": 0.00837399999727495,
+        "schema": 2.2999884095042944e-06,
+        "generate": 3.708055199997034,
+        "execute": 0.8806842000049073
+      },
+      "assumptions": "The total revenue is calculated by summing the product of unit price, quantity, and the complement of the discount for all orders in 2016.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "northwind",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 4.672
+    },
+    {
+      "id": "n08",
+      "question": "Which product category had the highest revenue in 2016, after discounts? Give the category name and revenue.",
+      "trap": "computed_metric",
+      "split": "dev",
+      "database": "northwind",
+      "join_bucket": "3+",
+      "pred_sql": "SELECT c.CategoryName, SUM(od.UnitPrice * od.Quantity * (1 - od.Discount)) AS Revenue FROM \"Order Details\" od JOIN Orders o ON od.OrderID = o.OrderID JOIN Products p ON od.ProductID = p.ProductID JOIN Categories c ON p.CategoryID = c.CategoryID WHERE strftime('%Y', o.OrderDate) = '2016' GROUP BY c.CategoryID ORDER BY Revenue DESC LIMIT 1;",
+      "error": null,
+      "timings": {
+        "route": 0.00844669999787584,
+        "schema": 2.0999868866056204e-06,
+        "generate": 5.040631599986227,
+        "execute": 0.18739219999406487
+      },
+      "assumptions": "The revenue is calculated as the sum of (UnitPrice * Quantity * (1 - Discount)) for each order detail.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "northwind",
+      "route_correct": true,
+      "first_attempt_match": true,
+      "latency": 5.344
+    },
+    {
+      "id": "n09",
+      "question": "What is the profit margin of each product?",
+      "trap": "unanswerable",
+      "split": "heldout",
+      "database": "northwind",
+      "join_bucket": "n/a",
+      "pred_sql": null,
+      "error": null,
+      "timings": {
+        "route": 0.00936209998326376,
+        "schema": 2.00001522898674e-06,
+        "generate": 2.628121799993096
+      },
+      "assumptions": "The database does not contain information on costs or expenses, which are necessary to calculate profit margins.",
+      "retried": false,
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "routed_to": "northwind",
+      "route_correct": true,
+      "refused": true,
+      "latency": 2.638
+    }
+  ]
+}

@@ -17,5 +17,10 @@ questions, filter and group by franchID (join TeamsFranchises on franchID for th
 Teams.name. For a specific team in a specific season, teamID/name and yearID are correct."""
 
 
-def with_glossary(schema_text: str) -> str:
-    return GLOSSARY + "\n\n" + schema_text
+GLOSSARIES = {"lahman": GLOSSARY}
+
+
+def with_glossary(schema_text: str, database: str = "lahman") -> str:
+    """Prepend the database's glossary; databases without one are returned unchanged."""
+    glossary = GLOSSARIES.get(database)
+    return glossary + "\n\n" + schema_text if glossary else schema_text

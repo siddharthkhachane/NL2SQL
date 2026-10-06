@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from nl2sql import db, pipeline
+from nl2sql import databases, db, pipeline
 
 RESULTS_DIR = Path(__file__).resolve().parent / "eval" / "results"
 
@@ -48,6 +48,12 @@ def html(text, cls):
 
 def show_schema(out, semantic):
     """What the model was shown, and whether the SQL stayed inside it."""
+    name = out.get("database")
+    if out.get("route_scores"):
+        scores = " &nbsp;·&nbsp; ".join(f"{k} {v:.3f}" for k, v in out["route_scores"].items())
+        html(f"database: <b>{name}</b> (chosen by the router; similarity {scores})", "stats")
+    elif name:
+        html(f"database: <b>{name}</b> (selected)", "stats")
     st.markdown("##### Schema sent to the model")
     if out.get("link_details"):
         st.dataframe(pd.DataFrame(out["link_details"]).rename(columns={"how": "source", "match": "best match"}),
@@ -61,30 +67,32 @@ def show_schema(out, semantic):
                  + ". The model filled them in from memory.", "note")
     else:
         html("Full schema, every table, 3 sample values per column.", "stats")
-    if semantic:
+    if semantic and name in (None, "lahman"):
         html("Data glossary included.", "stats")
 
 
-st.set_page_config(page_title="Lahman NL2SQL", layout="centered")
+st.set_page_config(page_title="NL2SQL", layout="centered")
 st.markdown(CSS, unsafe_allow_html=True)
-html("Lahman baseball database, 1871 to 2025", "kicker")
+html("Baseball, film rentals and trade: three SQLite databases", "kicker")
 st.title("Ask the almanac")
 
 ask_tab, eval_tab = st.tabs(["QUESTION", "EVAL"])
 
 with ask_tab:
     st.sidebar.markdown("**Pipeline**")
+    choice = st.sidebar.selectbox("Database", ["Auto (router)"] + databases.available())
     linking = st.sidebar.checkbox("Schema linking", value=False)
     retry = st.sidebar.checkbox("Retry once on error or empty result", value=True)
     assumptions = st.sidebar.checkbox("Return assumptions", value=True)
     gate = st.sidebar.checkbox("Refuse unanswerable questions", value=True)
-    semantic = st.sidebar.checkbox("Data glossary (stints, franchises)", value=True)
+    semantic = st.sidebar.checkbox("Data glossary (baseball only)", value=True)
 
     question = st.text_input("Question", placeholder="Who hit the most home runs in 1997?",
                              label_visibility="collapsed")
     if st.button("RUN") and question.strip():
+        auto = choice == "Auto (router)"
         out = pipeline.ask(question.strip(), linking=linking, retry=retry, assumptions=assumptions,
-                           gate=gate, semantic=semantic)
+                           gate=gate, semantic=semantic, database=None if auto else choice, route=auto)
         st.session_state["last"] = (out, semantic)
 
     if "last" in st.session_state:

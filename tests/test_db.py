@@ -79,3 +79,19 @@ def test_schema_samples(dbfile):
 def test_strip_fences():
     assert strip_fences("```sql\nSELECT 1\n```") == "SELECT 1"
     assert strip_fences("SELECT 1") == "SELECT 1"
+
+
+def test_schema_skips_blobs_internal_tables_and_shortens_long_text(tmp_path):
+    path = tmp_path / "b.sqlite"
+    conn = sqlite3.connect(path)
+    conn.execute("CREATE TABLE \"Order Details\" (id INTEGER PRIMARY KEY AUTOINCREMENT, pic BLOB, note TEXT)")
+    conn.execute("INSERT INTO \"Order Details\" (pic, note) VALUES (?, ?)", (b"\xff\xd8\xff", "x" * 200))
+    conn.commit()
+    conn.close()
+    schema = db.get_schema(path)
+    assert list(schema) == ["Order Details"]  # sqlite_sequence is excluded
+    cols = {c["name"]: c["samples"] for c in schema["Order Details"]}
+    assert cols["pic"] == []
+    assert cols["note"] == ["x" * 60 + "..."]
+    text = db.format_schema(schema)
+    assert text.startswith('TABLE "Order Details"') and "xff" not in text

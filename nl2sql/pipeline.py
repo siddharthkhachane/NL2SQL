@@ -1,19 +1,13 @@
 import time
-from functools import lru_cache
 
-from nl2sql import db
+from nl2sql import databases, db
 from nl2sql.generate import generate_sql, generate_structured, retry_feedback
 from nl2sql.semantic import with_glossary
 
 
-@lru_cache(maxsize=1)
-def _schema_text() -> str:
-    return db.format_schema(db.get_schema())
-
-
-def _execute(sql: str):
+def _execute(sql: str, database: str):
     try:
-        columns, rows = db.execute_safe(sql)
+        columns, rows = db.execute_safe(sql, path=databases.path(database))
         return columns, rows, None
     except Exception as e:
         return [], [], str(e)
@@ -24,30 +18,40 @@ def _is_refusal_error(error: str | None) -> bool:
 
 
 def ask(question: str, linking: bool = False, retry: bool = False, assumptions: bool = False,
-        gate: bool = False, semantic: bool = False) -> dict:
-    """Returns {sql, columns, rows, error, timings, tables, assumptions, refused, retried, first}.
+        gate: bool = False, semantic: bool = False, database: str | None = None, route: bool = False) -> dict:
+    """Returns {sql, columns, rows, error, timings, tables, assumptions, refused, retried, first, database}.
 
+    database: which database to query (default lahman). route: pick the database from the question instead.
     retry: on an execution error or empty result, regenerate once with the problem as feedback.
     assumptions: the model also returns one sentence on how it resolved ambiguity.
     gate: the model may refuse questions the schema cannot answer (sql=None, refused=True).
-    semantic: prepend a glossary of how the data is modeled (stints, franchises) to the schema.
+    semantic: prepend a glossary of how the data is modeled (stints, franchises); lahman only.
     """
     result = {"sql": None, "columns": [], "rows": [], "error": None, "timings": {}, "tables": None,
-              "assumptions": None, "refused": False, "retried": False, "first": None}
+              "assumptions": None, "refused": False, "retried": False, "first": None,
+              "database": database or databases.DEFAULT, "route_scores": None}
+
+    if route:
+        from nl2sql.router import get_router
+
+        t = time.perf_counter()
+        result["database"], result["route_scores"] = get_router().route(question)
+        result["timings"]["route"] = time.perf_counter() - t
+    name = result["database"]
 
     t = time.perf_counter()
     if linking:
         from nl2sql.linking import get_linker
 
-        linked = get_linker().link(question)
+        linked = get_linker(name).link(question)
         schema_text = linked["schema_text"]
         result["tables"], result["retrieved"] = linked["tables"], linked["retrieved"]
         result["link_details"], result["joins"] = linked["details"], linked["joins"]
     else:
-        schema_text = _schema_text()
+        schema_text = databases.schema_text(name)
     result["timings"]["link" if linking else "schema"] = time.perf_counter() - t
     if semantic:
-        schema_text = with_glossary(schema_text)
+        schema_text = with_glossary(schema_text, name)
 
     structured = assumptions or gate
 
@@ -74,7 +78,7 @@ def ask(question: str, linking: bool = False, retry: bool = False, assumptions: 
     result["sql"] = gen["sql"]
 
     t = time.perf_counter()
-    result["columns"], result["rows"], result["error"] = _execute(result["sql"])
+    result["columns"], result["rows"], result["error"] = _execute(result["sql"], name)
     result["timings"]["execute"] = time.perf_counter() - t
 
     needs_retry = (result["error"] and not _is_refusal_error(result["error"])) or \
@@ -88,7 +92,7 @@ def ask(question: str, linking: bool = False, retry: bool = False, assumptions: 
             if second.get("sql"):
                 result["sql"] = second["sql"]
                 result["assumptions"] = second.get("assumptions") or result["assumptions"]
-                result["columns"], result["rows"], result["error"] = _execute(result["sql"])
+                result["columns"], result["rows"], result["error"] = _execute(result["sql"], name)
         except Exception as e:
             result["error"] = f"generation failed: {e}"
         result["timings"]["retry"] = time.perf_counter() - t

@@ -34,7 +34,8 @@ def test_question_goes_through_pipeline_ask_and_renders_answer(monkeypatch):
     at.button[0].click().run()
     assert not at.exception
     assert fake_ask.calls == [("Who led the league?", {"linking": False, "retry": True,
-                                                       "assumptions": True, "gate": True, "semantic": True})]
+                                                       "assumptions": True, "gate": True, "semantic": True,
+                                                       "database": None, "route": True})]
     assert at.code[0].value == "SELECT 1 AS n"
     text = " ".join(m.value for m in at.markdown)
     assert "treated 'last season' as 2025" in text and "generate 1.50s" in text and "retried" in text
@@ -93,3 +94,23 @@ def test_result_survives_changing_an_option(monkeypatch):
     at.button[0].click().run()
     at.sidebar.checkbox[0].check().run()
     assert at.code[0].value == "SELECT 1 AS n" and len(fake_ask.calls) == 1
+
+
+def test_database_choice_and_router_scores(monkeypatch):
+    def routed(question, **flags):
+        out = fake_ask(question, **flags)
+        out.update({"database": "sakila", "route_scores": {"lahman": 0.2, "sakila": 0.5, "northwind": 0.3}})
+        return out
+
+    fake_ask.calls.clear()
+    monkeypatch.setattr(pipeline, "ask", routed)
+    at = AppTest.from_file(APP, default_timeout=30).run()
+    assert at.sidebar.selectbox[0].options[0] == "Auto (router)" and "lahman" in at.sidebar.selectbox[0].options
+    at.text_input[0].set_value("q").run()
+    at.button[0].click().run()
+    text = " ".join(m.value for m in at.markdown)
+    assert "chosen by the router" in text and "sakila 0.500" in text
+    at.sidebar.selectbox[0].select("lahman").run()
+    at.text_input[0].set_value("q2").run()
+    at.button[0].click().run()
+    assert fake_ask.calls[-1][1]["database"] == "lahman" and fake_ask.calls[-1][1]["route"] is False

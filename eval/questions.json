@@ -198,5 +198,167 @@
     "join_count": 0,
     "trap": "none",
     "split": "heldout_new"
+  },
+  {
+    "id": "s01",
+    "database": "sakila",
+    "question": "How many films are rated PG-13?",
+    "gold_sql": "SELECT COUNT(*) FROM film WHERE rating = 'PG-13'",
+    "join_count": 0,
+    "trap": "none",
+    "split": "dev"
+  },
+  {
+    "id": "s02",
+    "database": "sakila",
+    "question": "How many films are in the Horror category?",
+    "gold_sql": "SELECT COUNT(*) FROM film_category fc JOIN category c ON fc.category_id = c.category_id WHERE c.name = 'Horror'",
+    "join_count": 1,
+    "trap": "none",
+    "split": "dev"
+  },
+  {
+    "id": "s03",
+    "database": "sakila",
+    "question": "How many films has Penelope Guiness appeared in?",
+    "gold_sql": "SELECT COUNT(*) FROM film_actor fa JOIN actor a ON fa.actor_id = a.actor_id WHERE a.first_name = 'PENELOPE' AND a.last_name = 'GUINESS'",
+    "join_count": 1,
+    "trap": "value_case",
+    "split": "heldout"
+  },
+  {
+    "id": "s04",
+    "database": "sakila",
+    "question": "For each actor named Susan Davis, give the actor ID and the number of films they appeared in.",
+    "gold_sql": "SELECT a.actor_id, COUNT(*) FROM actor a JOIN film_actor fa ON a.actor_id = fa.actor_id WHERE a.first_name = 'SUSAN' AND a.last_name = 'DAVIS' GROUP BY a.actor_id",
+    "join_count": 1,
+    "trap": "duplicate_names",
+    "split": "dev"
+  },
+  {
+    "id": "s05",
+    "database": "sakila",
+    "question": "What was the total payment revenue in June 2005?",
+    "gold_sql": "SELECT ROUND(SUM(amount), 2) FROM payment WHERE payment_date >= '2005-06-01' AND payment_date < '2005-07-01'",
+    "join_count": 0,
+    "trap": "date_format",
+    "split": "dev"
+  },
+  {
+    "id": "s06",
+    "database": "sakila",
+    "question": "Which customer has paid the most in total? Give first name, last name and the total.",
+    "gold_sql": "SELECT c.first_name, c.last_name, ROUND(SUM(p.amount), 2) AS total FROM payment p JOIN customer c ON p.customer_id = c.customer_id GROUP BY c.customer_id ORDER BY total DESC LIMIT 1",
+    "join_count": 1,
+    "trap": "none",
+    "split": "dev"
+  },
+  {
+    "id": "s07",
+    "database": "sakila",
+    "question": "How many rental customers live in Canada?",
+    "gold_sql": "SELECT COUNT(*) FROM customer cu JOIN address a ON cu.address_id = a.address_id JOIN city ci ON a.city_id = ci.city_id JOIN country co ON ci.country_id = co.country_id WHERE co.country = 'Canada'",
+    "join_count": 3,
+    "trap": "none",
+    "split": "heldout"
+  },
+  {
+    "id": "s08",
+    "database": "sakila",
+    "question": "Which film category has been rented the most? Give the category name and the number of rentals.",
+    "gold_sql": "SELECT c.name, COUNT(*) AS rentals FROM rental r JOIN inventory i ON r.inventory_id = i.inventory_id JOIN film_category fc ON i.film_id = fc.film_id JOIN category c ON fc.category_id = c.category_id GROUP BY c.category_id ORDER BY rentals DESC LIMIT 1",
+    "join_count": 3,
+    "trap": "none",
+    "split": "dev"
+  },
+  {
+    "id": "s09",
+    "database": "sakila",
+    "question": "What is the average customer review score for films?",
+    "gold_sql": null,
+    "join_count": null,
+    "trap": "unanswerable",
+    "split": "heldout"
+  },
+  {
+    "id": "n01",
+    "database": "northwind",
+    "question": "How many products are discontinued?",
+    "gold_sql": "SELECT COUNT(*) FROM Products WHERE Discontinued = '1'",
+    "join_count": 0,
+    "trap": "flag_type",
+    "split": "dev"
+  },
+  {
+    "id": "n02",
+    "database": "northwind",
+    "question": "How many orders were shipped to the United Kingdom?",
+    "gold_sql": "SELECT COUNT(*) FROM Orders WHERE ShipCountry = 'UK'",
+    "join_count": 0,
+    "trap": "value_format",
+    "split": "heldout"
+  },
+  {
+    "id": "n03",
+    "database": "northwind",
+    "question": "What is the most expensive product and which category is it in? Give the product name and category name.",
+    "gold_sql": "SELECT p.ProductName, c.CategoryName FROM Products p JOIN Categories c ON p.CategoryID = c.CategoryID ORDER BY p.UnitPrice DESC LIMIT 1",
+    "join_count": 1,
+    "trap": "none",
+    "split": "dev"
+  },
+  {
+    "id": "n04",
+    "database": "northwind",
+    "question": "How many units are in stock across all products supplied by Pavlova, Ltd.?",
+    "gold_sql": "SELECT SUM(p.UnitsInStock) FROM Products p JOIN Suppliers s ON p.SupplierID = s.SupplierID WHERE s.CompanyName = 'Pavlova, Ltd.'",
+    "join_count": 1,
+    "trap": "none",
+    "split": "dev"
+  },
+  {
+    "id": "n05",
+    "database": "northwind",
+    "question": "Which employee has handled the most orders? Give first name, last name and the number of orders.",
+    "gold_sql": "SELECT e.FirstName, e.LastName, COUNT(*) AS n FROM Orders o JOIN Employees e ON o.EmployeeID = e.EmployeeID GROUP BY e.EmployeeID ORDER BY n DESC LIMIT 1",
+    "join_count": 1,
+    "trap": "none",
+    "split": "dev"
+  },
+  {
+    "id": "n06",
+    "database": "northwind",
+    "question": "How many orders did customers from Germany place?",
+    "gold_sql": "SELECT COUNT(*) FROM Orders o JOIN Customers c ON o.CustomerID = c.CustomerID WHERE c.Country = 'Germany'",
+    "join_count": 1,
+    "trap": "ambiguous_column",
+    "split": "heldout"
+  },
+  {
+    "id": "n07",
+    "database": "northwind",
+    "question": "What was the total revenue in 2016, after discounts?",
+    "gold_sql": "SELECT ROUND(SUM(d.UnitPrice * d.Quantity * (1 - d.Discount)), 2) FROM \"Order Details\" d JOIN Orders o ON d.OrderID = o.OrderID WHERE o.OrderDate >= '2016-01-01' AND o.OrderDate < '2017-01-01'",
+    "join_count": 1,
+    "trap": "computed_metric",
+    "split": "dev"
+  },
+  {
+    "id": "n08",
+    "database": "northwind",
+    "question": "Which product category had the highest revenue in 2016, after discounts? Give the category name and revenue.",
+    "gold_sql": "SELECT c.CategoryName, ROUND(SUM(d.UnitPrice * d.Quantity * (1 - d.Discount)), 2) AS revenue FROM \"Order Details\" d JOIN Orders o ON d.OrderID = o.OrderID JOIN Products p ON d.ProductID = p.ProductID JOIN Categories c ON p.CategoryID = c.CategoryID WHERE o.OrderDate >= '2016-01-01' AND o.OrderDate < '2017-01-01' GROUP BY c.CategoryID ORDER BY revenue DESC LIMIT 1",
+    "join_count": 3,
+    "trap": "computed_metric",
+    "split": "dev"
+  },
+  {
+    "id": "n09",
+    "database": "northwind",
+    "question": "What is the profit margin of each product?",
+    "gold_sql": null,
+    "join_count": null,
+    "trap": "unanswerable",
+    "split": "heldout"
   }
 ]

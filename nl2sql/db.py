@@ -56,17 +56,27 @@ def execute_safe(sql: str, limit: int = DEFAULT_LIMIT, timeout: float = DEFAULT_
         conn.close()
 
 
+def _short(value, limit: int = 60):
+    return value[:limit] + "..." if isinstance(value, str) and len(value) > limit else value
+
+
+def quote_name(name: str) -> str:
+    return name if name.isidentifier() else '"' + name + '"'
+
+
 def get_schema(path=None, samples: int = 3) -> dict:
     """{table: [{name, type, samples}]} with up to `samples` distinct values per column."""
     conn = connect(path)
     try:
-        tables = [r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")]
+        tables = [r[0] for r in conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")]
         schema = {}
         for t in tables:
             cols = []
             for _, name, ctype, *_ in conn.execute(f'PRAGMA table_info("{t}")').fetchall():
-                vals = [r[0] for r in conn.execute(
-                    f'SELECT DISTINCT "{name}" FROM "{t}" WHERE "{name}" IS NOT NULL LIMIT {samples}')]
+                vals = [_short(r[0]) for r in conn.execute(
+                    f'SELECT DISTINCT "{name}" FROM "{t}" WHERE "{name}" IS NOT NULL '
+                    f'AND typeof("{name}") <> ? LIMIT {samples}', ("blob",))]
                 cols.append({"name": name, "type": ctype, "samples": vals})
             schema[t] = cols
         return schema
@@ -77,8 +87,8 @@ def get_schema(path=None, samples: int = 3) -> dict:
 def format_schema(schema: dict) -> str:
     lines = []
     for table, cols in schema.items():
-        lines.append(f"TABLE {table}")
+        lines.append(f"TABLE {quote_name(table)}")
         for c in cols:
             sample = ", ".join(repr(v) for v in c["samples"])
-            lines.append(f"  {c['name']} {c['type']}  e.g. {sample}")
+            lines.append(f"  {quote_name(c['name'])} {c['type']}  e.g. {sample}")
     return "\n".join(lines)

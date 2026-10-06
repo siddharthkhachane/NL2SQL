@@ -92,3 +92,27 @@ Same flags (retry + assumptions + gate), 25 questions, temperature 0:
 - Changing a sidebar option used to wipe the result, because it was only drawn on the run where Run was clicked. Fixed with `st.session_state`.
 - A long-running `streamlit run` keeps imported modules (`nl2sql.pipeline`) in memory; only `app.py` reloads. After the `semantic` argument was added, the old server raised `TypeError: ask() got an unexpected keyword argument 'semantic'` until restarted. Restart the server after changing anything under `nl2sql/`.
 - Writing source files through shell heredocs mangled backslashes twice (`\b` in a regex became a backspace character, `\n` in a string became a real newline). Both were caught by tests failing at collection; fixed by editing the files directly, and all `.py` files were scanned for control characters afterwards.
+
+## Improvements branch, step 3: more databases and a router
+Added Sakila (`sakila_master.db`, 16 tables, declared FKs) and Northwind (`northwind.db`, an enlarged variant: 609,283 order lines vs about 2,155 in the classic one, dates shifted to 2012-2023), plus `nl2sql/databases.py` (registry), `nl2sql/router.py` and a `database` / `route` option on `ask()`. 18 gold questions (9 per database, each with 1 unanswerable); gold results were shown and checked row by row. No database-specific hints are given for the new databases (the glossary is Lahman-only).
+
+- Router: embeds every table/column description of every database and scores a database by the mean of its 3 best matches to the question. No tuning. Routing accuracy 42/43 (97.7%) in the eval.
+- Found while building: Northwind's `Categories.Picture` put raw JPEG bytes into the schema text (fixed: blob columns are skipped), long descriptions bloated the Sakila schema (values cut at 60 chars), `sqlite_sequence` leaked in as a table (excluded), and tables with spaces (`Order Details`) are now printed quoted.
+- Gold-set bugs caught before running: n04 ("supplier with the most products") had a tie (two suppliers with 5), so `LIMIT 1` was arbitrary; replaced. s07 ("how many customers live in Canada?") is answerable in both Sakila and Northwind, so no router can be right; reworded to "rental customers". These are the cross-database ambiguity cases a router cannot resolve from the text alone.
+- The model prompt no longer says "Lahman baseball database" (neutral wording for all databases), so the Lahman numbers moved slightly: 0.92 vs 0.88 on the same 25 questions (q14 stopped being refused). One question, one run: not a real effect, but it means the earlier Lahman numbers are not strictly comparable.
+
+Runs (retry + assumptions + gate + glossary, 43 questions, temperature 0):
+
+| | database given | router picks |
+|---|---|---|
+| all (43) | 0.953 | 0.930 |
+| lahman (25) | 0.920 | 0.920 |
+| sakila (9) | 1.000 | 0.889 |
+| northwind (9) | 1.000 | 1.000 |
+| unanswerable refused | 5/5 | 5/5 |
+| routing accuracy | - | 0.977 |
+
+- Sakila and Northwind were answered perfectly with the full schema and no hints, retry never fired (retry rate 0). They did not discriminate: this is a ceiling effect, so these results show the pipeline works on other schemas, not that any component helps there. The model has probably seen both schemas.
+- Value-format traps (`PENELOPE` stored upper case, `UK` for "United Kingdom", `Discontinued` stored as text '1') were all handled on the first attempt, because the 3 sample values shown per column carry the format. Value linking would not have changed anything here.
+- The one router miss: s05 ("total payment revenue in June 2005") went to Lahman by 0.435 vs 0.426 (it matches Lahman's year columns). The answerable gate then refused it ("no payment tables"), so the miss produced a refusal rather than a wrong answer.
+- Remaining failures are the same as before: q13 (Appearances vs Batting) and q03 (false refusal on "last season").

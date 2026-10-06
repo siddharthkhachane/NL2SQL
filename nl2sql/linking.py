@@ -77,14 +77,19 @@ def table_docs(schema: dict) -> list[tuple[str, str | None, str]]:
     return docs
 
 
+@lru_cache(maxsize=1)
+def get_model():
+    from sentence_transformers import SentenceTransformer
+
+    return SentenceTransformer(EMBED_MODEL)
+
+
 class Linker:
     def __init__(self, schema: dict, k: int = TOP_K, path=None):
-        from sentence_transformers import SentenceTransformer
-
         self.schema, self.k = schema, k
         self.dims = dimension_tables(schema, path)
         self.docs = table_docs(schema)
-        self.model = SentenceTransformer(EMBED_MODEL)
+        self.model = get_model()
         self.doc_vecs = self.model.encode([d[2] for d in self.docs], normalize_embeddings=True)
 
     def rank(self, question: str) -> list[tuple[str, float, str | None]]:
@@ -128,7 +133,8 @@ class Linker:
         return {"retrieved": top, "tables": tables, "schema_text": text, "details": details, "joins": joins}
 
 
-@lru_cache(maxsize=1)
-def get_linker() -> Linker:
-    return Linker(db.get_schema())
+@lru_cache(maxsize=None)
+def get_linker(database: str = "lahman") -> Linker:
+    from nl2sql import databases
 
+    return Linker(databases.schema(database), path=databases.path(database))

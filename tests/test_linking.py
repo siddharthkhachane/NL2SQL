@@ -76,7 +76,7 @@ def test_ask_with_linking_uses_subset_schema(monkeypatch):
                     "details": [{"table": "Teams", "how": "retrieved", "score": 0.5, "match": "(table)"}],
                     "joins": ["Teams.teamID = People.playerID"]}
 
-    monkeypatch.setattr(linking, "get_linker", lambda: FakeLinker())
+    monkeypatch.setattr(linking, "get_linker", lambda *a: FakeLinker())
     monkeypatch.setattr(pipeline, "generate_sql", lambda q, s: seen.setdefault("schema", s) and "SELECT 1")
     out = pipeline.ask("q", linking=True)
     assert seen["schema"] == "SUBSET" and out["tables"] == ["Teams", "People"] and "link" in out["timings"]
