@@ -1,0 +1,683 @@
+{
+  "label": "linking",
+  "timestamp": "2026-10-05T21:03:00",
+  "summary": {
+    "overall": {
+      "n": 20,
+      "exec_acc": 0.7,
+      "exact_match": 0.15
+    },
+    "retrieval_recall": {
+      "overall": {
+        "n": 17,
+        "topk": 0.353,
+        "with_neighbors": 0.824
+      },
+      "0": {
+        "n": 5,
+        "topk": 1.0,
+        "with_neighbors": 1.0
+      },
+      "1": {
+        "n": 6,
+        "topk": 0.167,
+        "with_neighbors": 1.0
+      },
+      "2": {
+        "n": 4,
+        "topk": 0.0,
+        "with_neighbors": 0.75
+      },
+      "3+": {
+        "n": 2,
+        "topk": 0.0,
+        "with_neighbors": 0.0
+      },
+      "n/a": null
+    },
+    "by_join_bucket": {
+      "0": {
+        "n": 5,
+        "exec_acc": 1.0,
+        "exact_match": 0.6
+      },
+      "1": {
+        "n": 6,
+        "exec_acc": 0.833,
+        "exact_match": 0.0
+      },
+      "2": {
+        "n": 4,
+        "exec_acc": 0.5,
+        "exact_match": 0.0
+      },
+      "3+": {
+        "n": 2,
+        "exec_acc": 1.0,
+        "exact_match": 0.0
+      },
+      "n/a": {
+        "n": 3,
+        "exec_acc": 0.0,
+        "exact_match": 0.0
+      }
+    },
+    "by_trap": {
+      "duplicate_names": {
+        "n": 1,
+        "exec_acc": 1.0,
+        "exact_match": 0.0
+      },
+      "franchise": {
+        "n": 3,
+        "exec_acc": 0.667,
+        "exact_match": 0.0
+      },
+      "inconsistent_columns": {
+        "n": 1,
+        "exec_acc": 1.0,
+        "exact_match": 0.0
+      },
+      "join_key": {
+        "n": 1,
+        "exec_acc": 1.0,
+        "exact_match": 0.0
+      },
+      "none": {
+        "n": 3,
+        "exec_acc": 1.0,
+        "exact_match": 0.333
+      },
+      "stint": {
+        "n": 4,
+        "exec_acc": 0.5,
+        "exact_match": 0.0
+      },
+      "time": {
+        "n": 3,
+        "exec_acc": 1.0,
+        "exact_match": 0.333
+      },
+      "unanswerable": {
+        "n": 3,
+        "exec_acc": 0.0,
+        "exact_match": 0.0
+      },
+      "wide_table": {
+        "n": 1,
+        "exec_acc": 1.0,
+        "exact_match": 1.0
+      }
+    },
+    "by_split": {
+      "dev": {
+        "n": 13,
+        "exec_acc": 0.769,
+        "exact_match": 0.154
+      },
+      "heldout": {
+        "n": 7,
+        "exec_acc": 0.571,
+        "exact_match": 0.143
+      }
+    },
+    "failure_tags": {
+      "stint": 2,
+      "schema_linking": 1,
+      "other": 3
+    }
+  },
+  "records": [
+    {
+      "id": "q01",
+      "question": "Which team won the most games in 2001? Give the team name and wins.",
+      "trap": "wide_table",
+      "split": "dev",
+      "join_bucket": "0",
+      "pred_sql": "SELECT name, W \nFROM Teams \nWHERE yearID = 2001 \nORDER BY W DESC \nLIMIT 1;",
+      "error": null,
+      "timings": {
+        "link": 18.812269399990328,
+        "generate": 1.1473812999902293,
+        "execute": 0.0012805000005755574
+      },
+      "exec_match": true,
+      "exact_match": true,
+      "failure": null,
+      "retrieval_recall_topk": true,
+      "retrieval_recall": true,
+      "tables": [
+        "Teams",
+        "Pitching",
+        "SeriesPost",
+        "AllstarFull",
+        "Batting",
+        "TeamsFranchises",
+        "People"
+      ],
+      "latency": 19.962
+    },
+    {
+      "id": "q02",
+      "question": "How many players were born in Japan?",
+      "trap": "none",
+      "split": "heldout",
+      "join_bucket": "0",
+      "pred_sql": "SELECT COUNT(*) FROM People WHERE birthCountry = 'Japan';",
+      "error": null,
+      "timings": {
+        "link": 0.009186199982650578,
+        "generate": 0.7307895999983884,
+        "execute": 0.005506799992872402
+      },
+      "exec_match": true,
+      "exact_match": true,
+      "failure": null,
+      "retrieval_recall_topk": true,
+      "retrieval_recall": true,
+      "tables": [
+        "People",
+        "BattingPost",
+        "HomeGames",
+        "Teams",
+        "AwardsPlayers",
+        "Parks",
+        "TeamsFranchises"
+      ],
+      "latency": 0.75
+    },
+    {
+      "id": "q03",
+      "question": "What was the highest salary last season?",
+      "trap": "time",
+      "split": "dev",
+      "join_bucket": "0",
+      "pred_sql": "SELECT MAX(salary) FROM Salaries WHERE yearID = (SELECT MAX(yearID) FROM Salaries);",
+      "error": null,
+      "timings": {
+        "link": 0.008637200022349134,
+        "generate": 0.6947072000184562,
+        "execute": 0.0030012999777682126
+      },
+      "exec_match": true,
+      "exact_match": true,
+      "failure": null,
+      "retrieval_recall_topk": true,
+      "retrieval_recall": true,
+      "tables": [
+        "Salaries",
+        "Pitching",
+        "Batting",
+        "Teams",
+        "Fielding",
+        "People",
+        "TeamsFranchises"
+      ],
+      "latency": 0.71
+    },
+    {
+      "id": "q04",
+      "question": "Which franchise has the most all-time wins? Give the franchise ID and total wins.",
+      "trap": "franchise",
+      "split": "dev",
+      "join_bucket": "0",
+      "pred_sql": "SELECT franchID, SUM(W) AS total_wins\nFROM Teams\nGROUP BY franchID\nORDER BY total_wins DESC\nLIMIT 1;",
+      "error": null,
+      "timings": {
+        "link": 0.011377100017853081,
+        "generate": 0.9296250999905169,
+        "execute": 0.0027849999896716326
+      },
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "retrieval_recall_topk": true,
+      "retrieval_recall": true,
+      "tables": [
+        "Teams",
+        "SeriesPost",
+        "AllstarFull",
+        "AwardsShareManagers",
+        "AwardsSharePlayers",
+        "TeamsFranchises",
+        "People"
+      ],
+      "latency": 0.946
+    },
+    {
+      "id": "q05",
+      "question": "What was the total home attendance of the Boston Red Sox in 2019?",
+      "trap": "inconsistent_columns",
+      "split": "heldout",
+      "join_bucket": "0",
+      "pred_sql": "SELECT SUM(HG.attendance) AS total_home_attendance\nFROM HomeGames HG\nJOIN Teams T ON HG.yearkey = T.yearID AND HG.teamkey = T.teamID\nWHERE T.name = 'Boston Red Sox' AND HG.yearkey = 2019;",
+      "error": null,
+      "timings": {
+        "link": 0.009956800000509247,
+        "generate": 0.9484159999992698,
+        "execute": 0.002685000014025718
+      },
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "retrieval_recall_topk": true,
+      "retrieval_recall": true,
+      "tables": [
+        "HomeGames",
+        "Teams",
+        "Pitching",
+        "Batting",
+        "Appearances",
+        "Parks",
+        "TeamsFranchises",
+        "People"
+      ],
+      "latency": 0.962
+    },
+    {
+      "id": "q06",
+      "question": "How many home runs did Mark McGwire hit in 1997?",
+      "trap": "stint",
+      "split": "dev",
+      "join_bucket": "1",
+      "pred_sql": "SELECT SUM(HR) AS home_runs\nFROM Batting\nJOIN People ON Batting.playerID = People.playerID\nWHERE People.nameFirst = 'Mark' AND People.nameLast = 'McGwire' AND Batting.yearID = 1997;",
+      "error": null,
+      "timings": {
+        "link": 0.011067900020861998,
+        "generate": 0.8814603999780957,
+        "execute": 0.014795800001593307
+      },
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "retrieval_recall_topk": false,
+      "retrieval_recall": true,
+      "tables": [
+        "Batting",
+        "Pitching",
+        "PitchingPost",
+        "Appearances",
+        "BattingPost",
+        "People",
+        "Teams"
+      ],
+      "latency": 0.92
+    },
+    {
+      "id": "q07",
+      "question": "Who hit the most home runs in 1997? Give first name, last name and home runs.",
+      "trap": "stint",
+      "split": "heldout",
+      "join_bucket": "1",
+      "pred_sql": "SELECT p.nameFirst, p.nameLast, b.HR\nFROM Batting b\nJOIN People p ON b.playerID = p.playerID\nWHERE b.yearID = 1997\nORDER BY b.HR DESC\nLIMIT 1;",
+      "error": null,
+      "timings": {
+        "link": 0.010608399985358119,
+        "generate": 0.8237945000000764,
+        "execute": 0.02087859998573549
+      },
+      "exec_match": false,
+      "exact_match": false,
+      "failure": "stint",
+      "retrieval_recall_topk": false,
+      "retrieval_recall": true,
+      "tables": [
+        "Batting",
+        "Pitching",
+        "PitchingPost",
+        "Appearances",
+        "BattingPost",
+        "People",
+        "Teams"
+      ],
+      "latency": 0.874
+    },
+    {
+      "id": "q08",
+      "question": "For each player named Chris Young, give the playerID and career home runs.",
+      "trap": "duplicate_names",
+      "split": "dev",
+      "join_bucket": "1",
+      "pred_sql": "SELECT p.playerID, SUM(b.HR) AS career_home_runs\nFROM People p\nJOIN Batting b ON p.playerID = b.playerID\nWHERE p.nameFirst = 'Chris' AND p.nameLast = 'Young'\nGROUP BY p.playerID;",
+      "error": null,
+      "timings": {
+        "link": 0.008177799987606704,
+        "generate": 1.2069189000176266,
+        "execute": 0.05606580001767725
+      },
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "retrieval_recall_topk": false,
+      "retrieval_recall": true,
+      "tables": [
+        "Batting",
+        "Pitching",
+        "BattingPost",
+        "Fielding",
+        "AwardsSharePlayers",
+        "People",
+        "Teams"
+      ],
+      "latency": 1.325
+    },
+    {
+      "id": "q09",
+      "question": "Which franchise has hit the most home runs all-time? Give the franchise name and total home runs.",
+      "trap": "franchise",
+      "split": "dev",
+      "join_bucket": "1",
+      "pred_sql": "SELECT tf.franchName, SUM(b.HR) AS total_home_runs\nFROM Batting b\nJOIN Teams t ON b.teamID = t.teamID AND b.yearID = t.yearID\nJOIN TeamsFranchises tf ON t.franchID = tf.franchID\nGROUP BY tf.franchName\nORDER BY total_home_runs DESC\nLIMIT 1;",
+      "error": null,
+      "timings": {
+        "link": 0.011169100005645305,
+        "generate": 1.0842712000012398,
+        "execute": 0.12761860000318848
+      },
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "retrieval_recall_topk": false,
+      "retrieval_recall": true,
+      "tables": [
+        "Teams",
+        "Pitching",
+        "Batting",
+        "PitchingPost",
+        "Appearances",
+        "TeamsFranchises",
+        "People"
+      ],
+      "latency": 1.226
+    },
+    {
+      "id": "q10",
+      "question": "Who led MLB in home runs last season? Give first name, last name and home runs.",
+      "trap": "time",
+      "split": "heldout",
+      "join_bucket": "1",
+      "pred_sql": "SELECT p.nameFirst, p.nameLast, b.HR\nFROM Batting b\nJOIN People p ON b.playerID = p.playerID\nWHERE b.yearID = (SELECT MAX(yearID) FROM Batting)\nORDER BY b.HR DESC\nLIMIT 1;",
+      "error": null,
+      "timings": {
+        "link": 0.012505000020610169,
+        "generate": 0.9891077999782283,
+        "execute": 0.027306700008921325
+      },
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "retrieval_recall_topk": false,
+      "retrieval_recall": true,
+      "tables": [
+        "Batting",
+        "Pitching",
+        "PitchingPost",
+        "Teams",
+        "BattingPost",
+        "People",
+        "TeamsFranchises"
+      ],
+      "latency": 1.06
+    },
+    {
+      "id": "q11",
+      "question": "Which team had the highest total payroll in 2016? Give the team name and payroll.",
+      "trap": "join_key",
+      "split": "dev",
+      "join_bucket": "1",
+      "pred_sql": "SELECT T.name, SUM(S.salary) AS total_payroll\nFROM Salaries S\nJOIN Teams T ON S.yearID = T.yearID AND S.teamID = T.teamID\nWHERE S.yearID = 2016\nGROUP BY T.name\nORDER BY total_payroll DESC\nLIMIT 1;",
+      "error": null,
+      "timings": {
+        "link": 0.01373460001195781,
+        "generate": 4.14158509997651,
+        "execute": 0.003477899997960776
+      },
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "retrieval_recall_topk": true,
+      "retrieval_recall": true,
+      "tables": [
+        "Salaries",
+        "Teams",
+        "Appearances",
+        "TeamsHalf",
+        "SeriesPost",
+        "People",
+        "TeamsFranchises"
+      ],
+      "latency": 4.162
+    },
+    {
+      "id": "q12",
+      "question": "List the first and last names of players who hit 40 or more home runs in 2001 and were All-Stars that year.",
+      "trap": "stint",
+      "split": "dev",
+      "join_bucket": "2",
+      "pred_sql": "SELECT DISTINCT p.nameFirst, p.nameLast\nFROM Batting b\nJOIN People p ON b.playerID = p.playerID\nJOIN Appearances a ON b.playerID = a.playerID AND b.yearID = a.yearID\nWHERE b.yearID = 2001 AND b.HR >= 40 AND a.G_all > 0;",
+      "error": null,
+      "timings": {
+        "link": 0.012493599992012605,
+        "generate": 6.581413300009444,
+        "execute": 0.02847490002750419
+      },
+      "exec_match": false,
+      "exact_match": false,
+      "failure": "stint",
+      "retrieval_recall_topk": false,
+      "retrieval_recall": false,
+      "tables": [
+        "Batting",
+        "Pitching",
+        "Appearances",
+        "Fielding",
+        "BattingPost",
+        "People",
+        "Teams"
+      ],
+      "latency": 6.641
+    },
+    {
+      "id": "q13",
+      "question": "How many different players have played for the Los Angeles Dodgers franchise, including its Brooklyn years?",
+      "trap": "franchise",
+      "split": "heldout",
+      "join_bucket": "2",
+      "pred_sql": "SELECT COUNT(DISTINCT playerID) AS num_players\nFROM Appearances\nJOIN Teams ON Appearances.teamID = Teams.teamID AND Appearances.yearID = Teams.yearID\nWHERE Teams.franchID = 'LAD';",
+      "error": null,
+      "timings": {
+        "link": 0.012454999989131466,
+        "generate": 7.36886400001822,
+        "execute": 0.16869160000351258
+      },
+      "exec_match": false,
+      "exact_match": false,
+      "failure": "schema_linking",
+      "retrieval_recall_topk": false,
+      "retrieval_recall": true,
+      "tables": [
+        "Batting",
+        "Pitching",
+        "Teams",
+        "Appearances",
+        "Fielding",
+        "People",
+        "TeamsFranchises"
+      ],
+      "latency": 7.706
+    },
+    {
+      "id": "q14",
+      "question": "Who was the highest-paid New York Yankees player in the most recent season with salary data? Give first name, last name and salary.",
+      "trap": "time",
+      "split": "dev",
+      "join_bucket": "2",
+      "pred_sql": "SELECT p.nameFirst, p.nameLast, s.salary\nFROM Salaries s\nJOIN People p ON s.playerID = p.playerID\nWHERE s.yearID = (SELECT MAX(yearID) FROM Salaries)\nAND s.teamID = 'NYA'\nORDER BY s.salary DESC\nLIMIT 1;",
+      "error": null,
+      "timings": {
+        "link": 0.013677799986908212,
+        "generate": 6.171807200007606,
+        "execute": 0.015439999988302588
+      },
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "retrieval_recall_topk": false,
+      "retrieval_recall": true,
+      "tables": [
+        "Salaries",
+        "Batting",
+        "Pitching",
+        "Teams",
+        "AwardsSharePlayers",
+        "People",
+        "TeamsFranchises"
+      ],
+      "latency": 6.217
+    },
+    {
+      "id": "q15",
+      "question": "Which Hall of Fame inducted player has the most career home runs? Give first name, last name and home runs.",
+      "trap": "none",
+      "split": "dev",
+      "join_bucket": "2",
+      "pred_sql": "SELECT p.nameFirst, p.nameLast, SUM(b.HR) AS careerHR\nFROM HallOfFame hof\nJOIN People p ON hof.playerID = p.playerID\nJOIN Batting b ON hof.playerID = b.playerID\nWHERE hof.inducted = 'Y'\nGROUP BY p.playerID\nORDER BY careerHR DESC\nLIMIT 1;",
+      "error": null,
+      "timings": {
+        "link": 0.013013200019486248,
+        "generate": 6.3428634999727365,
+        "execute": 0.06848440002067946
+      },
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "retrieval_recall_topk": false,
+      "retrieval_recall": true,
+      "tables": [
+        "Batting",
+        "Pitching",
+        "HallOfFame",
+        "AwardsPlayers",
+        "Appearances",
+        "People",
+        "Teams"
+      ],
+      "latency": 6.495
+    },
+    {
+      "id": "q16",
+      "question": "List the first and last names of players who attended the University of Southern California and hit at least 100 career home runs, with their career home runs.",
+      "trap": "none",
+      "split": "dev",
+      "join_bucket": "3+",
+      "pred_sql": "SELECT p.nameFirst, p.nameLast, SUM(b.HR) AS careerHR\nFROM People p\nJOIN CollegePlaying cp ON p.playerID = cp.playerID\nJOIN Batting b ON p.playerID = b.playerID\nWHERE cp.schoolID = 'usc'\nGROUP BY p.playerID\nHAVING careerHR >= 100;",
+      "error": null,
+      "timings": {
+        "link": 0.013773099984973669,
+        "generate": 7.411023599997861,
+        "execute": 0.06374919999507256
+      },
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "retrieval_recall_topk": false,
+      "retrieval_recall": false,
+      "tables": [
+        "Batting",
+        "Fielding",
+        "Appearances",
+        "BattingPost",
+        "Pitching",
+        "People",
+        "Teams"
+      ],
+      "latency": 7.56
+    },
+    {
+      "id": "q17",
+      "question": "For the 2001 Seattle Mariners, list each player's first name, last name, home runs for Seattle and salary, for the top 5 salaries.",
+      "trap": "stint",
+      "split": "heldout",
+      "join_bucket": "3+",
+      "pred_sql": "SELECT p.nameFirst, p.nameLast, b.HR, s.salary\nFROM Batting b\nJOIN People p ON b.playerID = p.playerID\nJOIN Salaries s ON b.playerID = s.playerID AND b.yearID = s.yearID AND b.teamID = s.teamID\nWHERE b.yearID = 2001 AND b.teamID = 'SEA'\nORDER BY s.salary DESC\nLIMIT 5;",
+      "error": null,
+      "timings": {
+        "link": 0.013366300001507625,
+        "generate": 7.83814869998605,
+        "execute": 0.02235290000680834
+      },
+      "exec_match": true,
+      "exact_match": false,
+      "failure": null,
+      "retrieval_recall_topk": false,
+      "retrieval_recall": false,
+      "tables": [
+        "Batting",
+        "BattingPost",
+        "Pitching",
+        "Fielding",
+        "Appearances",
+        "People",
+        "Teams"
+      ],
+      "latency": 7.898
+    },
+    {
+      "id": "q18",
+      "question": "How many pitches did Clayton Kershaw throw in his last start?",
+      "trap": "unanswerable",
+      "split": "dev",
+      "join_bucket": "n/a",
+      "pred_sql": "SELECT BFP FROM Pitching WHERE playerID = 'kershcl01' AND GS > 0 ORDER BY yearID DESC, stint DESC LIMIT 1;",
+      "error": null,
+      "timings": {
+        "link": 0.012696099991444498,
+        "generate": 7.560771200020099,
+        "execute": 0.007932300009997562
+      },
+      "exec_match": false,
+      "exact_match": false,
+      "failure": "other",
+      "refused": false,
+      "latency": 7.581
+    },
+    {
+      "id": "q19",
+      "question": "What was Aaron Judge's batting average with runners in scoring position in 2025?",
+      "trap": "unanswerable",
+      "split": "dev",
+      "join_bucket": "n/a",
+      "pred_sql": "SELECT ROUND(SUM(H) * 1.0 / SUM(AB), 3) AS batting_average_risp\nFROM Batting\nJOIN People ON Batting.playerID = People.playerID\nWHERE nameFirst = 'Aaron' AND nameLast = 'Judge' AND yearID = 2025 AND (RBI > 0 OR (H > 0 AND RBI = 0));",
+      "error": null,
+      "timings": {
+        "link": 0.012478299991926178,
+        "generate": 5.469738299987512,
+        "execute": 0.014791699999477714
+      },
+      "exec_match": false,
+      "exact_match": false,
+      "failure": "other",
+      "refused": false,
+      "latency": 5.497
+    },
+    {
+      "id": "q20",
+      "question": "How many home runs has Shohei Ohtani hit so far in the 2026 season?",
+      "trap": "unanswerable",
+      "split": "heldout",
+      "join_bucket": "n/a",
+      "pred_sql": "SELECT SUM(HR) AS total_home_runs\nFROM Batting\nJOIN People ON Batting.playerID = People.playerID\nWHERE People.nameFirst = 'Shohei' AND People.nameLast = 'Ohtani' AND Batting.yearID = 2026;",
+      "error": null,
+      "timings": {
+        "link": 0.01199219998670742,
+        "generate": 7.984530399990035,
+        "execute": 0.009525100002065301
+      },
+      "exec_match": false,
+      "exact_match": false,
+      "failure": "other",
+      "refused": false,
+      "latency": 8.006
+    }
+  ]
+}

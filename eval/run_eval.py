@@ -60,6 +60,8 @@ def tables_in(sql):
 def tag_failure(q, out):
     """Heuristic failure tag from the question's trap and simple SQL features."""
     pred, gold = (out.get("sql") or "").lower(), q["gold_sql"].lower()
+    if (out.get("error") or "").startswith("generation failed"):
+        return "other"  # API/infra failure, not a SQL error
     if out.get("error"):
         return "syntax"
     if q["trap"] == "stint" and "sum(" not in pred:
@@ -85,6 +87,11 @@ def score(q, out):
     rec = {"id": q["id"], "question": q["question"], "trap": q["trap"], "split": q["split"],
            "join_bucket": bucket(q["join_count"]), "pred_sql": out.get("sql"), "error": out.get("error"),
            "timings": out.get("timings", {}), "exec_match": False, "exact_match": False, "failure": None}
+    if q["gold_sql"] is not None and out.get("tables") is not None:
+        gold = tables_in(q["gold_sql"])
+        rec["retrieval_recall_topk"] = gold <= {t.lower() for t in out["retrieved"]}
+        rec["retrieval_recall"] = gold <= {t.lower() for t in out["tables"]}
+        rec["tables"] = out["tables"]
     if q["gold_sql"] is None:
         rec["refused"] = is_refusal(out)
         rec["exec_match"] = rec["refused"]
@@ -106,6 +113,14 @@ def _acc(recs):
             "exact_match": round(sum(r["exact_match"] for r in recs) / n, 3) if n else None}
 
 
+def _recall(recs):
+    r = [x for x in recs if "retrieval_recall" in x]
+    if not r:
+        return None
+    return {"n": len(r), "topk": round(sum(x["retrieval_recall_topk"] for x in r) / len(r), 3),
+            "with_neighbors": round(sum(x["retrieval_recall"] for x in r) / len(r), 3)}
+
+
 def summarize(records):
     def group(key):
         g = defaultdict(list)
@@ -117,7 +132,12 @@ def summarize(records):
     for r in records:
         if r["failure"]:
             fails[r["failure"]] += 1
-    return {"overall": _acc(records), "by_join_bucket": group("join_bucket"), "by_trap": group("trap"),
+    by_bucket = defaultdict(list)
+    for r in records:
+        by_bucket[r["join_bucket"]].append(r)
+    recall = {"overall": _recall(records), **{k: _recall(v) for k, v in sorted(by_bucket.items())}}
+    return {"overall": _acc(records), "retrieval_recall": recall if recall["overall"] else None,
+            "by_join_bucket": group("join_bucket"), "by_trap": group("trap"),
             "by_split": group("split"), "failure_tags": dict(fails)}
 
 
@@ -147,8 +167,23 @@ def print_report(result):
         for k, v in s[key].items():
             print(f"  {k:22} n={v['n']:<3} exec={v['exec_acc']}  exact={v['exact_match']}")
     print("failure tags:", s["failure_tags"])
+    if s["retrieval_recall"]:
+        print("retrieval recall (topk / with neighbors):")
+        for k, v in s["retrieval_recall"].items():
+            if v:
+                print(f"  {k:8} n={v['n']:<3} {v['topk']} / {v['with_neighbors']}")
     if result.get("path"):
         print("saved:", result["path"])
+
+
+def compare(a, b):
+    """Print baseline-vs-other execution accuracy per join bucket from two saved results."""
+    la, lb = a["label"], b["label"]
+    print(f"{'bucket':8} {la:>14} {lb:>14}")
+    sa, sb = a["summary"], b["summary"]
+    print(f"{'overall':8} {sa['overall']['exec_acc']:>14} {sb['overall']['exec_acc']:>14}")
+    for k in sa["by_join_bucket"]:
+        print(f"{k:8} {sa['by_join_bucket'][k]['exec_acc']:>14} {sb['by_join_bucket'][k]['exec_acc']:>14}")
 
 
 def show_gold():
@@ -162,10 +197,15 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--split", default="all", choices=["all", "dev", "heldout"])
     ap.add_argument("--label", default="baseline")
+    ap.add_argument("--linking", action="store_true", help="use schema linking")
+    ap.add_argument("--compare", nargs=2, metavar=("A", "B"), help="compare two saved result files")
     ap.add_argument("--gold", action="store_true", help="print row count and sample for each gold query")
     args = ap.parse_args()
-    if args.gold:
+    if args.compare:
+        compare(*[json.loads(Path(p).read_text(encoding="utf-8")) for p in args.compare])
+    elif args.gold:
         show_gold()
     else:
         from nl2sql.pipeline import ask
-        print_report(run(ask, args.split, args.label))
+        label = args.label if not args.linking or args.label != "baseline" else "linking"
+        print_report(run(lambda q: ask(q, linking=args.linking), args.split, label))

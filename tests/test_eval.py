@@ -70,3 +70,9 @@ def test_run_summarizes_and_saves(tmp_path, monkeypatch):
     assert set(res["summary"]["by_join_bucket"]) == {"0", "1", "2", "3+", "n/a"}
     saved = json.loads(next(tmp_path.glob("*.json")).read_text())
     assert saved["label"] == "oracle" and len(saved["records"]) == 20
+
+
+def test_generation_failure_is_not_tagged_as_syntax():
+    q6 = next(q for q in QUESTIONS if q["id"] == "q06")
+    rec = ev.score(q6, {"sql": None, "rows": [], "error": "generation failed: 429 rate limit"})
+    assert rec["failure"] == "other"

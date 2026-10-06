@@ -10,13 +10,21 @@ def _schema_text() -> str:
     return db.format_schema(db.get_schema())
 
 
-def ask(question: str) -> dict:
-    """Returns {sql, rows, columns, error, timings}."""
-    result = {"sql": None, "columns": [], "rows": [], "error": None, "timings": {}}
+def ask(question: str, linking: bool = False) -> dict:
+    """Returns {sql, columns, rows, error, timings, tables}. `tables` is set only when linking is on."""
+    result = {"sql": None, "columns": [], "rows": [], "error": None, "timings": {}, "tables": None}
 
     t = time.perf_counter()
-    schema_text = _schema_text()
-    result["timings"]["schema"] = time.perf_counter() - t
+    if linking:
+        from nl2sql.linking import get_linker
+
+        linked = get_linker().link(question)
+        schema_text = linked["schema_text"]
+        result["tables"] = linked["tables"]
+        result["retrieved"] = linked["retrieved"]
+    else:
+        schema_text = _schema_text()
+    result["timings"]["link" if linking else "schema"] = time.perf_counter() - t
 
     t = time.perf_counter()
     try:

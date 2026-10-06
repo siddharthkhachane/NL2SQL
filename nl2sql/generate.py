@@ -25,8 +25,9 @@ def strip_fences(text: str) -> str:
 
 
 def generate_sql(question: str, schema_text: str, model: str | None = None) -> str:
-    resp = OpenAI().chat.completions.create(
+    resp = OpenAI(max_retries=8).chat.completions.create(
         model=model or os.getenv("NL2SQL_MODEL", DEFAULT_MODEL),
+        temperature=0,
         messages=[{"role": "user", "content": PROMPT.format(schema=schema_text, question=question)}],
     )
     return strip_fences(resp.choices[0].message.content)
