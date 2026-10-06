@@ -44,3 +44,19 @@ Retrieval recall (top-5 / with neighbors): 0 joins 1.00/1.00, 1 join 0.17/1.00, 
 
 Finding: on a 27-table schema that fits in the prompt (about 14k characters), linking did not improve accuracy. The difference is a single question (5 points), which is within noise for a 20-question eval. The retrieval step costs recall that the full schema never loses.
 - Memorization: with linking on, q16 and q17 (3+ joins) were answered correctly using tables that were not in the prompt (`CollegePlaying`, `Salaries`), including the guess `schoolID = 'usc'`. Detected by comparing `tables` with the tables in `pred_sql`. gpt-4o appears to know the public Lahman schema, so (a) linking cannot restrict the model, because the executor still sees all 27 tables, and (b) the 3+ join accuracy of 1.0 despite 0/2 retrieval recall is not evidence of working linking. A fair test would rename tables/columns or use a database the model has not seen.
+
+## Phase 4
+All runs use the full-schema pipeline (no linking), gpt-4o, temperature 0. Each run is cumulative.
+
+| run | exec acc (20) | answerable acc (17) | first-attempt acc | retry rate | unanswerable refused | false refusals |
+|---|---|---|---|---|---|---|
+| baseline_t0 | 0.75 | 0.88 | 0.88 | - | 0/3 | - |
+| + retry | 0.75 | 0.88 | 0.88 | 0.00 | 0/3 | 0 |
+| + retry + assumptions | 0.75 | 0.88 | 0.88 | 0.00 | 0/3 | 0 |
+| + retry + assumptions + gate | 0.85 | 0.82 | 0.82 | 0.00 | 3/3 | 1 |
+
+- Retry never fired: on all 17 answerable questions the baseline SQL ran without error and returned rows, so there was nothing to retry. Before/after is identical (0.88 / 0.88). The retry path is covered by unit tests with scripted model replies, not by the eval. The remaining errors are wrong-but-valid SQL (stint, Appearances vs Batting), which neither an error nor an empty result can detect.
+- Assumptions: useful on the time questions (q03: "Salaries ends in 2016"; q10: "last season = 2025"; q14: "most recent salary season is 2016"). Weak elsewhere: q07 and q12 (the stint failures/luck cases) say "none", so the model does not notice stints; q08's sentence is vacuous; q05 says it used `Teams` while the passing SQL used `HomeGames`, so the sentence is not a reliable description of the query.
+- Gate: refused 3/3 unanswerable questions with sensible reasons (no pitch data, no play-by-play, no 2026 data). It also refused q03 ("highest salary last season") because `Salaries` ends in 2016 and "last season" would be 2025. The gold query resolves it to 2016, so this counts as a false refusal; it is arguably a reasonable flag. Net accuracy on all 20 rose from 0.75 to 0.85, but answerable accuracy fell from 0.88 to 0.82. The gate trades one answerable question for three unanswerable ones.
+- Heldout (7 questions, never used for tuning): 0.57 before the gate, 0.71 after.
+- Each eval run takes 4-5 minutes because of the 30k tokens-per-minute OpenAI limit with ~4k-token prompts and `max_retries=8` back-off.

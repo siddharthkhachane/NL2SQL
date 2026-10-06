@@ -50,7 +50,7 @@ def norm_sql(sql):
 
 def is_refusal(out):
     err = out.get("error") or ""
-    return not out.get("sql") or "only SELECT" in err or "empty query" in err
+    return out.get("refused", False) or not out.get("sql") or "only SELECT" in err or "empty query" in err
 
 
 def tables_in(sql):
@@ -60,6 +60,8 @@ def tables_in(sql):
 def tag_failure(q, out):
     """Heuristic failure tag from the question's trap and simple SQL features."""
     pred, gold = (out.get("sql") or "").lower(), q["gold_sql"].lower()
+    if out.get("refused"):
+        return "other"  # wrongly refused an answerable question
     if (out.get("error") or "").startswith("generation failed"):
         return "other"  # API/infra failure, not a SQL error
     if out.get("error"):
@@ -86,7 +88,8 @@ def score(q, out):
     """Returns a result record for one question."""
     rec = {"id": q["id"], "question": q["question"], "trap": q["trap"], "split": q["split"],
            "join_bucket": bucket(q["join_count"]), "pred_sql": out.get("sql"), "error": out.get("error"),
-           "timings": out.get("timings", {}), "exec_match": False, "exact_match": False, "failure": None}
+           "timings": out.get("timings", {}), "assumptions": out.get("assumptions"),
+           "retried": out.get("retried", False), "exec_match": False, "exact_match": False, "failure": None}
     if q["gold_sql"] is not None and out.get("tables") is not None:
         gold = tables_in(q["gold_sql"])
         rec["retrieval_recall_topk"] = gold <= {t.lower() for t in out["retrieved"]}
@@ -100,8 +103,11 @@ def score(q, out):
         return rec
     _, gold_rows = db.execute_safe(q["gold_sql"], limit=100000)
     rec["exact_match"] = norm_sql(out.get("sql")) == norm_sql(q["gold_sql"])
-    if not out.get("error"):
+    if not out.get("error") and not out.get("refused"):
         rec["exec_match"] = results_match(out["rows"], gold_rows, q["gold_sql"])
+    first = out.get("first") or {"error": out.get("error"), "rows": out.get("rows"), "refused": out.get("refused")}
+    rec["first_attempt_match"] = bool(not first.get("error") and not first.get("refused")
+                                      and results_match(first["rows"], gold_rows, q["gold_sql"]))
     if not rec["exec_match"]:
         rec["failure"] = tag_failure(q, out)
     return rec
@@ -132,11 +138,21 @@ def summarize(records):
     for r in records:
         if r["failure"]:
             fails[r["failure"]] += 1
+    answerable = [r for r in records if r["trap"] != "unanswerable"]
+    unans = [r for r in records if r["trap"] == "unanswerable"]
+    robustness = {
+        "retry_rate": round(sum(r["retried"] for r in answerable) / len(answerable), 3) if answerable else None,
+        "first_attempt_acc": round(sum(r["first_attempt_match"] for r in answerable) / len(answerable), 3)
+        if answerable else None,
+        "final_acc": round(sum(r["exec_match"] for r in answerable) / len(answerable), 3) if answerable else None,
+        "unanswerable_refused": f"{sum(r['exec_match'] for r in unans)}/{len(unans)}",
+        "false_refusals": sum(1 for r in answerable if r["pred_sql"] is None and r["error"] is None),
+    }
     by_bucket = defaultdict(list)
     for r in records:
         by_bucket[r["join_bucket"]].append(r)
     recall = {"overall": _recall(records), **{k: _recall(v) for k, v in sorted(by_bucket.items())}}
-    return {"overall": _acc(records), "retrieval_recall": recall if recall["overall"] else None,
+    return {"overall": _acc(records), "answerable_only": robustness, "retrieval_recall": recall if recall["overall"] else None,
             "by_join_bucket": group("join_bucket"), "by_trap": group("trap"),
             "by_split": group("split"), "failure_tags": dict(fails)}
 
@@ -166,6 +182,7 @@ def print_report(result):
         print(key)
         for k, v in s[key].items():
             print(f"  {k:22} n={v['n']:<3} exec={v['exec_acc']}  exact={v['exact_match']}")
+    print("answerable only:", s["answerable_only"])
     print("failure tags:", s["failure_tags"])
     if s["retrieval_recall"]:
         print("retrieval recall (topk / with neighbors):")
@@ -198,6 +215,9 @@ if __name__ == "__main__":
     ap.add_argument("--split", default="all", choices=["all", "dev", "heldout"])
     ap.add_argument("--label", default="baseline")
     ap.add_argument("--linking", action="store_true", help="use schema linking")
+    ap.add_argument("--retry", action="store_true", help="retry once on SQL error or empty result")
+    ap.add_argument("--assumptions", action="store_true", help="model states how it resolved ambiguity")
+    ap.add_argument("--gate", action="store_true", help="model may refuse unanswerable questions")
     ap.add_argument("--compare", nargs=2, metavar=("A", "B"), help="compare two saved result files")
     ap.add_argument("--gold", action="store_true", help="print row count and sample for each gold query")
     args = ap.parse_args()
@@ -207,5 +227,6 @@ if __name__ == "__main__":
         show_gold()
     else:
         from nl2sql.pipeline import ask
-        label = args.label if not args.linking or args.label != "baseline" else "linking"
-        print_report(run(lambda q: ask(q, linking=args.linking), args.split, label))
+        flags = {"linking": args.linking, "retry": args.retry, "assumptions": args.assumptions, "gate": args.gate}
+        label = args.label if args.label != "baseline" else "+".join(k for k, v in flags.items() if v) or "baseline"
+        print_report(run(lambda q: ask(q, **flags), args.split, label))
