@@ -8,3 +8,7 @@ font = "sans serif"
 
 [client]
 toolbarMode = "minimal"
+
+[server]
+# The default watcher imports every transformers submodule and logs a torchvision error for each.
+fileWatcherType = "none"
