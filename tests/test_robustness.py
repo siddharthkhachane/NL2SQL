@@ -128,3 +128,30 @@ def test_semantic_glossary_is_added_only_when_requested(monkeypatch):
     assert "NOTES ABOUT THIS DATA" not in seen[0] and "TABLE Batting" in seen[0]
     assert seen[1].startswith("NOTES ABOUT THIS DATA") and "stint" in seen[1] and "franchID" in seen[1]
     assert "TABLE Batting" in seen[1]
+
+
+def test_fixed_temperature_models_do_not_get_temperature_zero(monkeypatch):
+    sent = []
+
+    class Resp:
+        class usage:
+            prompt_tokens, completion_tokens = 10, 5
+            completion_tokens_details = type("D", (), {"reasoning_tokens": 3})()
+
+        choices = [type("C", (), {"message": type("M", (), {"content": "SELECT 1"})()})()]
+
+    class FakeClient:
+        def __init__(self, **kw):
+            self.chat = type("Ch", (), {"completions": self})()
+
+        def create(self, **kwargs):
+            sent.append(kwargs)
+            return Resp()
+
+    monkeypatch.setattr(generate, "OpenAI", FakeClient)
+    generate.reset_usage()
+    generate._complete("p", model="gpt-5-mini")
+    generate._complete("p", model="gpt-4o")
+    assert "temperature" not in sent[0] and sent[1]["temperature"] == 0
+    assert generate.USAGE == {"calls": 2, "prompt_tokens": 20, "completion_tokens": 10, "reasoning_tokens": 6}
+    assert generate.fixed_temperature_model("o3-mini") and not generate.fixed_temperature_model("gpt-4o-mini")

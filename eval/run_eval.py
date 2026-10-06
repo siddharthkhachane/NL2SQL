@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 import re
 import sys
 import time
@@ -10,7 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from nl2sql import databases, db  # noqa: E402
+from nl2sql import databases, db, generate  # noqa: E402
 
 QUESTIONS = ROOT / "eval" / "questions.json"
 RESULTS_DIR = ROOT / "eval" / "results"
@@ -175,6 +176,7 @@ def summarize(records):
 def run(ask_fn, split=None, label=None, save=True, database=None):
     """ask_fn receives the question dict (so it can read the gold database when not routing)."""
     records = []
+    generate.reset_usage()
     for q in load_questions(split, database):
         t = time.perf_counter()
         out = ask_fn(q)
@@ -182,6 +184,8 @@ def run(ask_fn, split=None, label=None, save=True, database=None):
         rec["latency"] = round(time.perf_counter() - t, 3)
         records.append(rec)
     result = {"label": label, "timestamp": datetime.now().isoformat(timespec="seconds"),
+              "model": os.getenv("NL2SQL_MODEL", generate.DEFAULT_MODEL), "usage": dict(generate.USAGE),
+              "avg_latency": round(sum(r["latency"] for r in records) / len(records), 2) if records else None,
               "summary": summarize(records), "records": records}
     if save:
         RESULTS_DIR.mkdir(exist_ok=True)
@@ -193,6 +197,7 @@ def run(ask_fn, split=None, label=None, save=True, database=None):
 
 def print_report(result):
     s = result["summary"]
+    print(f"model: {result.get('model')}  avg latency: {result.get('avg_latency')}s  usage: {result.get('usage')}")
     print(f"overall: {s['overall']}")
     for key in ("by_database", "by_join_bucket", "by_trap", "by_split"):
         print(key)

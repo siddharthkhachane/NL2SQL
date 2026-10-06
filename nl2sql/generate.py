@@ -38,14 +38,33 @@ def strip_fences(text: str) -> str:
     return (m.group(1) if m else text).strip()
 
 
+USAGE = {"calls": 0, "prompt_tokens": 0, "completion_tokens": 0, "reasoning_tokens": 0}
+
+
+def reset_usage() -> None:
+    for key in USAGE:
+        USAGE[key] = 0
+
+
+def fixed_temperature_model(model: str) -> bool:
+    """GPT-5 and o-series models only accept the default temperature."""
+    return model.startswith(("gpt-5", "o1", "o3", "o4"))
+
+
 def _complete(prompt: str, model: str | None = None, json_mode: bool = False) -> str:
+    model = model or os.getenv("NL2SQL_MODEL", DEFAULT_MODEL)
     extra = {"response_format": {"type": "json_object"}} if json_mode else {}
+    if not fixed_temperature_model(model):
+        extra["temperature"] = 0
     resp = OpenAI(max_retries=8).chat.completions.create(
-        model=model or os.getenv("NL2SQL_MODEL", DEFAULT_MODEL),
-        temperature=0,
-        messages=[{"role": "user", "content": prompt}],
-        **extra,
-    )
+        model=model, messages=[{"role": "user", "content": prompt}], **extra)
+    usage = resp.usage
+    if usage:
+        USAGE["calls"] += 1
+        USAGE["prompt_tokens"] += usage.prompt_tokens
+        USAGE["completion_tokens"] += usage.completion_tokens
+        details = getattr(usage, "completion_tokens_details", None)
+        USAGE["reasoning_tokens"] += getattr(details, "reasoning_tokens", 0) or 0
     return resp.choices[0].message.content
 
 
