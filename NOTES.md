@@ -60,3 +60,8 @@ All runs use the full-schema pipeline (no linking), gpt-4o, temperature 0. Each 
 - Gate: refused 3/3 unanswerable questions with sensible reasons (no pitch data, no play-by-play, no 2026 data). It also refused q03 ("highest salary last season") because `Salaries` ends in 2016 and "last season" would be 2025. The gold query resolves it to 2016, so this counts as a false refusal; it is arguably a reasonable flag. Net accuracy on all 20 rose from 0.75 to 0.85, but answerable accuracy fell from 0.88 to 0.82. The gate trades one answerable question for three unanswerable ones.
 - Heldout (7 questions, never used for tuning): 0.57 before the gate, 0.71 after.
 - Each eval run takes 4-5 minutes because of the 30k tokens-per-minute OpenAI limit with ~4k-token prompts and `max_retries=8` back-off.
+
+## Phase 5
+- The first CSS override (`[class*="st-"] { font-family: ... }`) replaced the Material icon font, so the sidebar toggle rendered as the text "double_arrow_right". Found by screenshot; icon elements are now excluded from the font rule.
+- Streamlit headings ignore the body font and the text input's fill sits on a wrapper div, not the `<input>`; both needed their own selectors (found by inspecting computed styles in the browser).
+- Running the real pipeline from the page on the 1997 home run question reproduced the known stint failure (Griffey, 56 instead of McGwire, 58) with assumptions "none".
